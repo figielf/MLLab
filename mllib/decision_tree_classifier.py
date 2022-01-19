@@ -52,8 +52,8 @@ class BinaryTreeNode:
         left_split_mask = self._get_left_split_mask(X[:, self.split_column_idx], self.split_value)
         X_left, X_right = X[left_split_mask], X[~left_split_mask]
         Y_left, Y_right = Y[left_split_mask], Y[~left_split_mask]
-        # print(f'fit (depth:{self.depth}) - Y_left len:{len(Y_left)}, Y_right len:{len(Y_right)}')
         # print(f'fit (depth:{self.depth}) - Y before split len:{len(Y)}, Y:{Y}')
+        # print(f'fit (depth:{self.depth}) - Y_left len:{len(Y_left)}, Y_right len:{len(Y_right)}')
         self.left_child = BinaryTreeNode(self.depth + 1, self.max_depth, self.max_bucket_size,
                                          trace_logs=self.trace_logs)
         self.left_child.fit(X_left, Y_left)

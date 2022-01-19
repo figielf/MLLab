@@ -52,14 +52,17 @@ if __name__ == '__main__':
 
     print('MNIST data test:')
     X, Y, _ = get_mnist_data()
+    idxs = np.logical_or(Y == 0, Y == 1)
+    X = X[idxs].copy()
+    Y = Y[idxs].copy()
     model = run_model(X, Y, N=10000, max_depth=7, max_bucket_size=None, trace_logs=True)
 
     print('MNIST data test:')
     N=10000
-    X, Y = get_donut_data(N, )
+    X, Y = get_donut_data(N)
     model = run_model(X, Y, N=N, max_depth=7, max_bucket_size=None, trace_logs=False)
 
     print('MNIST data test:')
     N=10000
-    X, Y = get_xor_data()
+    X, Y = get_xor_data(N)
     model = run_model(X, Y, N=N, max_depth=7, max_bucket_size=None, trace_logs=False)
