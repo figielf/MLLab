@@ -1,5 +1,5 @@
 from datetime import datetime
-from data_utils import get_mnist_data, get_xor_data, get_donut_data
+from integration_tests.utils.data_utils import get_mnist_data, get_xor_data, get_donut_data
 from knn_classifier import KnnClassifier
 
 
