@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from bagging_classifier import BaggingClassifier
+from bagging_estimator import BaggingClassifier
 from integration_tests.utils.plot_utils import plot_decision_boundary_2d
 from sklearn.tree import DecisionTreeClassifier
 

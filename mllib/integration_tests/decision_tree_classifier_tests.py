@@ -1,40 +1,59 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.tree import DecisionTreeClassifier
-from bagging_regressor import BaggingRegressor
+import pandas as pd
+from datetime import datetime
+
+from decision_tree_estimator import BinaryTreeClassifier
+from integration_tests.utils.data_utils import get_mnist_data, get_xor_data, get_donut_data
+
+
+def run_model(X, Y, N=2000, max_depth=10, max_bucket_size=10, trace_logs=True):
+  X_train, X_test = X[:N // 2], X[N // 2:N]
+  Y_train, Y_test = Y[:N // 2], Y[N // 2:N]
+
+  model = BinaryTreeClassifier(max_depth, max_bucket_size, trace_logs=trace_logs)
+
+  # print('Y_train:', Y_train)
+  t0 = datetime.now()
+  model.fit(X_train, Y_train)
+  print(f'Fitted within {datetime.now() - t0} time')
+
+  t0 = datetime.now()
+  acc = model.score(X_train, Y_train)
+  print(f'Predicted within {datetime.now() - t0} time with train accuracy={acc}')
+
+  t0 = datetime.now()
+  acc = model.score(X_test, Y_test)
+  print(f'Predicted within {datetime.now() - t0} time with test accuracy={acc}')
+
+  return model
 
 
 if __name__ == '__main__':
-  T = 100
-  x_axis = np.linspace(0, 2 * np.pi, T)
-  y_axis = np.sin(x_axis)
+  ##  for MNIST
+  X, Y, pic_shape = get_mnist_data()
+  idxs = np.logical_or(Y == 0, Y == 1)
+  X = X[idxs].copy()
+  Y = Y[idxs].copy()
 
-  # randomly choose training data
-  N = 30
-  idx = np.random.choice(T, size=N, replace=False)
-  Xtrain = x_axis[idx].reshape(N, 1)
-  Ytrain = y_axis[idx]
+  model = run_model(X, Y, N=10000, max_depth=7, max_bucket_size=None)
+  imp = pd.DataFrame(model.get_importance(), columns=['columns_id', 'imporatnce'])
+  sorted_imp = imp.sort_values(by='imporatnce', ascending=False)
+  print(f'Imporatnce:{sorted_imp}')
 
+  ## for xor
+  N = 20000
+  X, Y = get_xor_data(N)
 
-  # single decision tree regressor, not bagged
-  model = DecisionTreeClassifier()
-  model.fit(Xtrain, Ytrain)
-  simple_prediction = model.predict(x_axis.reshape(T, 1))
-  simple_score = model.score(x_axis.reshape(T, 1), y_axis)
-  print('score for 1 tree:', simple_score)
+  model = run_model(X, Y, N=N, max_depth=10, max_bucket_size=None)
+  imp = pd.DataFrame(model.get_importance(), columns=['columns_id', 'imporatnce'])
+  sorted_imp = imp.sort_values(by='imporatnce', ascending=False)
+  print(f'Imporatnce:{sorted_imp}')
 
+  ## for donut
+  N = 20000
+  X, Y = get_donut_data(N)
 
-  # bagging decision tree regressor
-  B = 300
-  bagging_model = BaggingRegressor(DecisionTreeClassifier, B)
-  bagging_model.fit(Xtrain, Ytrain)
-  bagging_prediction = bagging_model.predict(x_axis.reshape(T, 1))
-  bagging_score = bagging_model.score(x_axis.reshape(T, 1), y_axis)
-  print(f'bagging model score for {B} tree:', bagging_model.score(x_axis.reshape(T, 1), y_axis))
-
-  plt.figure(figsize=(20, 10))
-  plt.plot(x_axis, bagging_prediction, color='b', label=f'bagging model prediction (R2={bagging_score})')
-  plt.plot(x_axis, simple_prediction, color='r', label=f'single model prediction (R2={simple_score})')
-  plt.plot(x_axis, y_axis, color='y', label='true trend')
-  plt.legend()
-  plt.show()
+  model = run_model(X, Y, N=N, max_depth=20, max_bucket_size=None)
+  imp = pd.DataFrame(model.get_importance(), columns=['columns_id', 'imporatnce'])
+  sorted_imp = imp.sort_values(by='imporatnce', ascending=False)
+  print(f'Imporatnce:{sorted_imp}')

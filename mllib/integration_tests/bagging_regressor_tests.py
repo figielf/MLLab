@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeRegressor
-from bagging_regressor import BaggingRegressor
+from bagging_estimator import BaggingRegressor
 
 
 if __name__ == '__main__':

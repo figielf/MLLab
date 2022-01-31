@@ -1,6 +1,6 @@
 from datetime import datetime
 from integration_tests.utils.data_utils import get_mnist_data, get_xor_data, get_donut_data
-from knn_classifier import KnnClassifier
+from knn_classifier_estimator import KnnClassifier
 
 
 def run_model(k, X, Y, N=2000):
