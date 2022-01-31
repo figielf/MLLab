@@ -1,16 +1,6 @@
 import numpy as np
 import pandas as pd
-
-
-def binary_entropy(y):
-    # assume y is binary - 0 or 1
-    N = len(y)
-    s1 = (y == 1).sum()
-    if 0 == s1 or N == s1:
-        return 0
-    p1 = float(s1) / N
-    p0 = 1 - p1
-    return -p0 * np.log2(p0) - p1 * np.log2(p1)
+from scores import binary_entropy
 
 
 class BinaryTreeNode:
@@ -22,7 +12,6 @@ class BinaryTreeNode:
     information_gain = None
 
     def __init__(self, depth, max_depth=None, max_bucket_size=None, trace_logs=True):
-        # print(f'Creating new node with depth={depth}')
         self.depth = depth
         self.max_depth = max_depth
         self.max_bucket_size = max_bucket_size
@@ -31,29 +20,22 @@ class BinaryTreeNode:
             raise Exception(f'depth > max_depth:{depth > max_depth}, depth={depth}, max_depth={max_depth}')
 
     def fit(self, X, Y):
-        if (self.trace_logs == True):
+        if self.trace_logs:
             print(f'fit (depth:{self.depth}) - Start fit')
-            # print(f'fit (depth:{self.depth}) - X:{X}')
-            # print(f'fit (depth:{self.depth}) - Y:{Y}')
-        if (self._is_fitted() == False):
-            if (self._can_split(Y)):
-                # print('Is allowed to split')
+        if not self._is_fitted():
+            if self._can_split(Y):
                 split_column, self.split_value, self.information_gain = self._find_best_split(X, Y)
-                if (self.trace_logs == True):
-                    print(
-                        f'fit (depth:{self.depth}) - (best_split_col, best_split_value, max_ig):{(split_column, self.split_value, self.information_gain)}')
-                if (split_column is None):
-                    # print('fit (depth:{self.depth}) - no splits found, will make this node a leaf')
+                if self.trace_logs:
+                    print(f'fit (depth:{self.depth}) - (best_split_col, best_split_value, max_ig):'
+                          f'{(split_column, self.split_value, self.information_gain)}')
+                if split_column is None:
                     self.prediction = self._calc_prediction(Y)
-                    # print(f'fit (depth:{self.depth}) - Leaf on level {self.depth}, calculated prediction={self.prediction}')
                     return
 
                 self.split_column_idx = int(split_column)
                 left_split_mask = self._get_left_split_mask(X[:, self.split_column_idx], self.split_value)
                 X_left, X_right = X[left_split_mask], X[~left_split_mask]
                 Y_left, Y_right = Y[left_split_mask], Y[~left_split_mask]
-                # print(f'fit (depth:{self.depth}) - Y_left len:{len(Y_left)}, Y_right len:{len(Y_right)}')
-                # print(f'fit (depth:{self.depth}) - Y before split len:{len(Y)}, Y:{Y}')
                 self.left_child = self._make_child_node(self.depth + 1, self.max_depth, self.max_bucket_size,
                                                         trace_logs=self.trace_logs)
                 self.left_child.fit(X_left, Y_left)
@@ -61,42 +43,28 @@ class BinaryTreeNode:
                                                          trace_logs=self.trace_logs)
                 self.right_child.fit(X_right, Y_right)
             else:
-                # print('fit (depth:{self.depth}) - Is not allowed to split')
-                # print('fit (depth:{self.depth}) - Y:', Y)
                 self.prediction = self._calc_prediction(Y)
-                # print(f'fit (depth:{self.depth}) - Calculated prediction={self.prediction}')
 
     def predict(self, X):
         result = np.zeros(len(X))
-        # print(f'predict - node level={self.depth}')
-        if (self._is_leaf() == True):
-            # print('Node has not childrens')
-            # print('predict - self.prediction:', self.prediction)
+        if self._is_leaf():
             return self.prediction
         left_split_mask = self._get_left_split_mask(X[:, self.split_column_idx], self.split_value)
 
         left_predictions = self.left_child.predict(X[left_split_mask])
         right_predictions = self.right_child.predict(X[~left_split_mask])
-        # print(f'predict - left_predictions:{left_predictions}, left_split_mask:{left_split_mask}')
-        # print(f'predict - right_predictions:{right_predictions}, right_split_mask:{~left_split_mask}')
 
-        # print('predict - left_split_mask:', left_split_mask)
         result[left_split_mask] = left_predictions
         result[~left_split_mask] = right_predictions
-        # print('predict - result:', result)
         return result
 
     def get_importance(self):
-        # tabs = '\t'*self.depth
-        # print(f'{tabs}get_importance - node level {self.depth}')
-        if (self._is_fitted() == False):
+        if not self._is_fitted():
             raise Exception(f'Node on level {self.depth} is not fitted yet')
-        if (self._is_leaf()):  # no split no gain
+        if self._is_leaf():  # no split no gain
             return np.array([(0, 0)])
         left_importance = self.left_child.get_importance()
-        # print(f'{tabs}get_importance on level {self.depth} - left_importance:{left_importance}')
         right_importance = self.right_child.get_importance()
-        # print(f'{tabs}get_importance on level {self.depth} - right_importance:{right_importance}')
         return self._calc_node_level_total_importance(left_importance, right_importance)
 
     def self_make_child_node(self, depth, max_depth=None, max_bucket_size=None, trace_logs=True):
@@ -111,42 +79,38 @@ class BinaryTreeNode:
     def _calc_information_gain(self, y, split_mask):
         y0 = y[split_mask]
         y1 = y[~split_mask]
-        # print(f'_calc_information_gain - y0:{y0}')
-        # print(f'_calc_information_gain - y1:{y1}')
         N_0 = len(y0)
         N_1 = len(y1)
         N = N_0 + N_1
-        if (N_0 == 0 or N_1 == 0):
-            # print(f'_calc_information_gain - one leg (left:{N_0}, right:{N_1}) is lenght of 0 so 0 is returned as information gain')
+        if N_0 == 0 or N_1 == 0:
             return 0
-        # print(f'_calc_information_gain - self._calc_node_cost(y):{self._calc_node_cost(y)}, self._calc_node_cost(y0):{self._calc_node_cost(y0)}, self._calc_node_cost(y1):{self._calc_node_cost(y1)}')
         return self._calc_node_cost(y) - (N_0 * self._calc_node_cost(y0) + N_1 * self._calc_node_cost(y1)) / N
 
     def _calc_node_level_total_importance(self, left_child_importance, right_child_importance):
-        tabs = '\t' * self.depth
-        importances = np.concatenate(
+        importance = np.concatenate(
             (left_child_importance, right_child_importance, np.array([[self.split_column_idx, self.information_gain]])))
-        # print(f'{tabs}_calc_node_level_total_importance on level {self.depth} - not summed importances:')
-        # print(importances)
-        importances_df = pd.DataFrame(importances, columns=['col_idx', 'information_gain'])
-        importance = importances_df.groupby('col_idx', as_index=False).sum().values
-        # print(f'{tabs}_calc_node_level_total_importance on level {self.depth} - summed importance:')
-        # print(importance)
-        return importance
+        importance_df = pd.DataFrame(importance, columns=['col_idx', 'information_gain'])
+        return importance_df.groupby('col_idx', as_index=False).sum().values
 
     def _is_fitted(self):
-        has_no_split_details = self.split_column_idx is None and self.split_value is None and self.left_child is None and self.right_child is None
-        if (self.prediction is None and has_no_split_details):  # not a leaf neither splitted
+        has_no_split_details = self.split_column_idx is None \
+                               and self.split_value is None \
+                               and self.left_child is None \
+                               and self.right_child is None
+        if self.prediction is None and has_no_split_details:  # not a leaf neither splitted
             return False
-        if (self.prediction is not None and has_no_split_details == True):  # is leaf
+        if has_no_split_details and self.prediction is not None:  # is leaf
             return True
-        has_split_details = self.split_column_idx is not None and self.split_value is not None and self.left_child is not None and self.right_child is not None
-        if (self.prediction is None and has_split_details == True):  # is splitted
+        has_split_details = self.split_column_idx is not None \
+                            and self.split_value is not None \
+                            and self.left_child is not None \
+                            and self.right_child is not None
+        if has_split_details and self.prediction is None:  # is splitted
             return True
         raise Exception(f'There are conflicting values in self.prediction and other attributes related to node split')
 
     def _is_leaf(self):
-        if (self._is_fitted()):
+        if self._is_fitted():
             return self.prediction is not None
         return False
 
@@ -156,52 +120,40 @@ class BinaryTreeNode:
         # 2. num of obserwations bigger than requested => len(y) > self.max_bucket_size
         # 3. there is any variation in labels => (len(set(y)) == 1) > 1
         allowed = True
-        # print('should_try_split - result:', allowed)
-        if (self.max_depth is not None):
-            # print(f'self.max_depth is not None and node.depth <= self.max_depth={node.depth <= self.max_depth}, node.depth={node.depth}, self.max_depth={self.max_depth}')
+        if self.max_depth is not None:
             allowed = allowed and self.depth < self.max_depth
-        # print('should_try_split - result:', allowed)
-        if (self.max_bucket_size is not None):
-            # print(f'self.max_bucket_size is not None and bucket_size > self.max_bucket_size={bucket_size > self.max_bucket_size}, node.bucket_size={bucket_size}, self.max_bucket_size={self.max_bucket_size}')
+        if self.max_bucket_size is not None:
             allowed = allowed and len(y) > self.max_bucket_size
-        if (len(y) == 1 or len(set(y)) == 1):
+        if len(y) == 1 or len(set(y)) == 1:
             return False
-        # print('should_try_split - result:', allowed)
         return allowed
 
     def _find_best_split(self, x, y):
         splits = self._get_split_candidates(x, y)
-        # print('_find_best_split - splits:', pd.DataFrame(splits, columns=['column_idx', 'split_value', 'ig']))
-        if (len(splits) == 0):
-            return (None, None, None)
+        if len(splits) == 0:
+            return None, None, None
         return splits[np.argmax(splits[:, 2])]
 
     def _get_split_candidates(self, x, y):
         splits = []
         for i in range(x.shape[1]):
             x_col = x[:, i]
-            if (len(set(x_col)) == 1):
-                # print(f'_find_all_splits - all split column {i} valueas are same (={X[:,i][0]}) and should no split further')
+            if len(set(x_col)) == 1:
                 continue
             sort_idx = np.argsort(x_col)
             x_col_sorted = x_col[sort_idx]
             y_sorted = y[sort_idx]
             steps_idx = self._get_steps(y_sorted)
-            # print(f'_find_all_splits - column={i}, steps_idx:{steps_idx}, x_col_sorted:{x_col_sorted}, y_sorted:{y_sorted}')
             for s_idx in steps_idx:
                 split_point = (x_col_sorted[s_idx] + x_col_sorted[s_idx + 1]) / 2.0
-                # print('_find_all_splits - split_point:', split_point)
                 left_split_mask = self._get_left_split_mask(x_col, split_point)
                 ig = self._calc_information_gain(y, left_split_mask)
-                # print('_find_all_splits - calculated information gain:', ig)
-                splits.append([i, split_point, ig])
+                if ig > 0.0:
+                    splits.append([i, split_point, ig])
         return np.array(splits)
 
     def _get_left_split_mask(self, x, split_by_value):
-        # print(f'_get_left_split_mask - split_by_value:{split_by_value}')
-        # print(f'_get_left_split_mask - x:{x}')
         left_split_mask = x < split_by_value
-        # print('_get_split_mask - left_split_mask:', left_split_mask)
         return left_split_mask
 
     def _get_steps(self, y):
@@ -215,7 +167,7 @@ class BinaryTreeClassifierNode(BinaryTreeNode):
         super().__init__(depth, max_depth, max_bucket_size, trace_logs)
 
     def _calc_prediction(self, y):
-        if (len(y) == 1 or len(set(y)) == 1):
+        if len(y) == 1 or len(set(y)) == 1:
             return y[0]
         return int(np.round(y.mean()))
 
@@ -233,9 +185,12 @@ class BinaryTreeRegressorNode(BinaryTreeNode):
         super().__init__(depth, max_depth, max_bucket_size, trace_logs)
 
     def _calc_prediction(self, y):
-        if (len(y) == 1 or len(set(y)) == 1):
-            return y[0]
-        return np.round(y.mean())
+        if len(y) == 1 or len(set(y)) == 1:
+            result = y[0]
+        result = y.mean()
+        if np.isnan(result):
+            raise Exception(f'_calc_prediction calculated nan for the leaf, result={result}, len(y)={len(y)}')
+        return result
 
     def _calc_node_cost(self, y):
         return np.var(y)
@@ -264,6 +219,7 @@ class BinaryTreeBase():
 class BinaryTreeClassifier(BinaryTreeBase):
     def __init__(self, max_depth=10, max_bucket_size=10, trace_logs=True):
         super().__init__(max_depth, max_bucket_size, trace_logs)
+        self.head = None
 
     def fit(self, X, Y):
         self.head = BinaryTreeClassifierNode(1, self.max_depth, self.max_bucket_size, trace_logs=self.trace_logs)
@@ -273,6 +229,34 @@ class BinaryTreeClassifier(BinaryTreeBase):
 class BinaryTreeRegressor(BinaryTreeBase):
     def __init__(self, max_depth=10, max_bucket_size=10, trace_logs=True):
         super().__init__(max_depth, max_bucket_size, trace_logs)
+        self.head = None
+
+    def fit(self, X, Y):
+        self.head = BinaryTreeRegressorNode(1, self.max_depth, self.max_bucket_size, trace_logs=self.trace_logs)
+        self.head.fit(X, Y)
+
+    def score(self, X, Y):
+        predictions = self.predict(X)
+        return np.mean(predictions == Y)
+
+    def get_importance(self):
+        return self.head.get_importance()
+
+
+class BinaryTreeClassifier(BinaryTreeBase):
+    def __init__(self, max_depth=10, max_bucket_size=10, trace_logs=True):
+        super().__init__(max_depth, max_bucket_size, trace_logs)
+        self.head = None
+
+    def fit(self, X, Y):
+        self.head = BinaryTreeClassifierNode(1, self.max_depth, self.max_bucket_size, trace_logs=self.trace_logs)
+        self.head.fit(X, Y)
+
+
+class BinaryTreeRegressor(BinaryTreeBase):
+    def __init__(self, max_depth=10, max_bucket_size=10, trace_logs=True):
+        super().__init__(max_depth, max_bucket_size, trace_logs)
+        self.head = None
 
     def fit(self, X, Y):
         self.head = BinaryTreeRegressorNode(1, self.max_depth, self.max_bucket_size, trace_logs=self.trace_logs)
