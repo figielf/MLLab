@@ -10,3 +10,7 @@ def binary_entropy(y):
     p1 = float(s1) / N
     p0 = 1 - p1
     return -p0 * np.log2(p0) - p1 * np.log2(p1)
+
+
+def exponential_loss(f_hat, y):
+    return np.exp(-y * f_hat).sum()
