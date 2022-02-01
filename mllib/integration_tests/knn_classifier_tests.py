@@ -31,14 +31,14 @@ if __name__ == '__main__':
         run_model(k, X.copy(), Y.copy(), N)
 
     print('MNIST data test:')
-    N=2000
+    N = 2000
     X, Y = get_donut_data(N)
     for k in range(1, 6):
         print(f'{k}NN classifier')
         run_model(k, X.copy(), Y.copy(), N)
 
     print('MNIST data test:')
-    N=2000
+    N = 2000
     X, Y = get_xor_data(N)
     for k in range(1, 6):
         print(f'{k}NN classifier')
