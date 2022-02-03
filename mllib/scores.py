@@ -14,3 +14,4 @@ def binary_entropy(y):
 
 def exponential_loss(f_hat, y):
     return np.exp(-y * f_hat).sum()
+
