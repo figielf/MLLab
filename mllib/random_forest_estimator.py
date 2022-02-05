@@ -5,11 +5,10 @@ from scores import binary_entropy
 
 
 class RandomForestBinaryTreeNode(BinaryTreeNode):
-    split_features_subset = None
-
     def __init__(self, depth, max_depth=None, max_bucket_size=None, n_features=None, trace_logs=True):
         super().__init__(depth, max_depth, max_bucket_size, trace_logs)
         self.n_features = n_features
+        self.split_features_subset = None
 
     def _find_best_split(self, x, y):
         if self.n_features is not None:

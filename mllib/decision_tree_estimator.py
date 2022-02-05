@@ -4,13 +4,6 @@ from scores import binary_entropy
 
 
 class BinaryTreeNode:
-    split_column_idx = None
-    split_value = None
-    left_child = None
-    right_child = None
-    prediction = None
-    information_gain = None
-
     def __init__(self, depth, max_depth=None, max_bucket_size=None, trace_logs=True):
         self.depth = depth
         self.max_depth = max_depth
@@ -18,6 +11,12 @@ class BinaryTreeNode:
         self.trace_logs = trace_logs
         if self.max_depth is not None and self.max_depth < self.depth:
             raise Exception(f'depth > max_depth:{depth > max_depth}, depth={depth}, max_depth={max_depth}')
+        self.split_column_idx = None
+        self.split_value = None
+        self.left_child = None
+        self.right_child = None
+        self.prediction = None
+        self.information_gain = None
 
     def fit(self, X, Y):
         if self.trace_logs:
@@ -161,10 +160,9 @@ class BinaryTreeNode:
 
 
 class BinaryTreeClassifierNode(BinaryTreeNode):
-    prediction_features = None
-
     def __init__(self, depth, max_depth=None, max_bucket_size=None, trace_logs=True):
         super().__init__(depth, max_depth, max_bucket_size, trace_logs)
+        self.prediction_features = None
 
     def _calc_prediction(self, y):
         if len(y) == 1 or len(set(y)) == 1:
@@ -179,10 +177,9 @@ class BinaryTreeClassifierNode(BinaryTreeNode):
 
 
 class BinaryTreeRegressorNode(BinaryTreeNode):
-    prediction_features = None
-
     def __init__(self, depth, max_depth=None, max_bucket_size=None, trace_logs=True):
         super().__init__(depth, max_depth, max_bucket_size, trace_logs)
+        self.prediction_features = None
 
     def _calc_prediction(self, y):
         if len(y) == 1 or len(set(y)) == 1:
