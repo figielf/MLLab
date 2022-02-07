@@ -1,7 +1,7 @@
-import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
 from adaboost_classifier_estimator import AdaBoostClassifier
+from integration_tests.utils.data_utils import get_mushroom_data
 
 
 if __name__ == '__main__':
@@ -10,7 +10,7 @@ if __name__ == '__main__':
     Y_test[Y_test == 0] = -1
 
     T = 200
-    T_step = 100
+    T_step = 10
 
     train_errors = []
     test_errors = []
