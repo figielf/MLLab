@@ -5,7 +5,7 @@ from natural_networks.AnnClassifier_2l_oryginal import AnnClassifier_2l_oryginal
 from natural_networks.AnnClassifier_2l_recursive import AnnClassifier_2l_recursive
 from natural_networks.nn_activations import SigmoidActivation, SoftmaxActivation, TanhActivation, ReLUActivation
 from natural_networks.nn_layers import DenseLayer
-from natural_networks.nn_sequential_estimator import AnnClassifier_with_layers
+from natural_networks.nn_sequential_estimator import NNSequentialClassifier
 
 
 def compare(modelclass1, modelclass2, n_steps=4, eps=1e-10, plot_training_history=True):
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     l0 = DenseLayer(D, M1, SigmoidActivation(), init_params=[W1, b1])
     l1 = DenseLayer(M1, K, SoftmaxActivation(), init_params=[W2, b2])
 
-    compare2(AnnClassifier_2l_oryginal, AnnClassifier_with_layers, [l0, l1], n_steps=100, eps=1e-10, plot_training_history=False)
+    compare2(AnnClassifier_2l_oryginal, NNSequentialClassifier, [l0, l1], n_steps=100, eps=1e-10, plot_training_history=False)
 
 
     # randomly initialize weights
@@ -145,5 +145,5 @@ if __name__ == '__main__':
     l1 = DenseLayer(M1, M2, SigmoidActivation(), init_params=[W2_2, b2_2])
     l2 = DenseLayer(M2, K, SoftmaxActivation(), init_params=[W3_2, b3_2])
 
-    compare3(AnnClassifier_with_layers, [l0, l1, l2], n_steps=100, plot_training_history=True)
+    compare3(NNSequentialClassifier, [l0, l1, l2], n_steps=100, plot_training_history=True)
 

@@ -1,11 +1,10 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from activations import sigmoid, softmax
-from scores import accuracy, log_loss
+from scores import log_loss
 from utils_ndarray import ndarray_one_hot_encode
 
 
-class AnnClassifier_with_layers:
+class NNSequentialClassifier:
     def __init__(self, layers, n_steps, n_classes=None, learning_rate=0.001,
                  plot_training_history=False):
         self.layers = layers
@@ -65,24 +64,20 @@ class AnnClassifier_with_layers:
 
     def _backward(self, x, y):
         hist = []
-        # w0 = weights[0]
-        # w1 = weights[1]
-        # b0 = biases[0]
-        # b1 = biases[1]
-        print(f'-------------step 0-------------')
-        z_layers = self._forward(x)  # , [w0, w1], [b0, b1], activations)
-        p_hat = z_layers[-1]
+        #print(f'-------------step 0-------------')
+        feature_values_by_layer = self._forward(x)
+        p_hat = feature_values_by_layer[-1]
 
         loss_start = log_loss(y, p_hat)
         acc_start = self._accuracy(np.argmax(y, axis=1), np.argmax(p_hat, axis=1))
         hist.append(np.array([loss_start, acc_start]))
 
         for step in range(1, self._n_steps + 1):
-            print(f'-------------step {step}-------------')
-            self._update_params(x, y, z_layers)
+            #print(f'-------------step {step}-------------')
+            self._update_params(x, y, feature_values_by_layer)
 
-            z_layers = self._forward(x)  # , [w0, w1], [b0, b1], activations)
-            p_hat = z_layers[-1]
+            feature_values_by_layer = self._forward(x)
+            p_hat = feature_values_by_layer[-1]
             loss = log_loss(y, p_hat)
             acc = self._accuracy(np.argmax(y, axis=1), np.argmax(p_hat, axis=1))
             hist.append(np.array([loss, acc]))
@@ -103,50 +98,28 @@ class AnnClassifier_with_layers:
         return hist
 
 
-    def _update_params(self, x, y, z_layers):
+    def _update_params(self, x, y, feature_values_by_layer):
         n_layers = len(self.layers)
 
         deltas = []
-        delta = y - z_layers[-1]
+        delta = y - feature_values_by_layer[-1]
         deltas.append(delta)
         for l_idx in reversed(range(n_layers-1)):
             current_layer = self.layers[l_idx + 1]
             prev_layer = self.layers[l_idx]
-            #delta = current_layer.calc_gradient_delta(next_layer_delta=delta, prev_layer=prev_layer, feature_values=z_layers[l_idx+1])
-            delta = delta.dot(current_layer.weights.T) * prev_layer.activation.backprop_derivative(z_layers[l_idx+1])
+            delta = current_layer.calc_gradient_delta(delta, prev_layer, feature_values_by_layer[l_idx+1])
             deltas.append(delta)
         deltas.reverse()
 
         for l_idx in range(n_layers):
             layer = self.layers[l_idx]
-            layer.update_params(self._learning_rate, deltas[l_idx], z_layers[l_idx])
+            layer.update_params(self._learning_rate, deltas[l_idx], feature_values_by_layer[l_idx])
 
 
     def _forward(self, x):
-        layers_out = []
-        layers_out.append(x)
+        out_feature_values_by_layer = [x]
         z = x
         for layer in self.layers:
             z = layer.forward(z)
-            layers_out.append(z)
-        return layers_out
-
-    #def _dw1(self, z, err, layer):
-    #    dz = err
-    #    return z.T.dot(dz)
-
-    #def _db1(self, err, layer):
-    #    return np.sum(err, axis=0)
-
-    #def _dw0(self, x, z, err, w1, layer):
-    #    dz = err.dot(w1.T) * layer.activation.backprop_derivative(z)
-    #    return x.T.dot(dz)
-
-    #def _db0(self, z, err, w1, layer):
-    #    return np.sum(err.dot(w1.T) * layer.activation.backprop_derivative(z), axis=0)
-
-    #def _dw(self, z, err, layer):
-    #    return z.T.dot(err)
-
-    #def _db(self, err, layer):
-    #    return np.sum(err, axis=0)
+            out_feature_values_by_layer.append(z)
+        return out_feature_values_by_layer
