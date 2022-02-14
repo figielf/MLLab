@@ -17,9 +17,6 @@ class Layer:
     def forward(self, z):
         pass
 
-    def d_params(self, z):
-        pass
-
     def update_params(self, params):
         self._params = params
 
@@ -50,11 +47,6 @@ class DenseLayer(Layer):
         assert out.shape == (x.shape[0], self._output_dim)
         return out
 
-    def d_params(self, err, prev_layer):
-        dw = self._dw(z, err)
-        db = self._db(err)
-        pass
-
     def _dw(self, z, err):
         return z.T.dot(err)
 
@@ -62,7 +54,7 @@ class DenseLayer(Layer):
         return np.sum(err, axis=0)
 
     def _initialize_params(self):
-        w0 = np.random.randn(self._imput_dim, self._output_dim) / np.sqrt(self._output_dim)
+        w0 = np.random.randn(self._input_dim, self._output_dim) / np.sqrt(self._output_dim)
         b0 = np.random.randn(self._output_dim)
         return w0, b0
 

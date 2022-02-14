@@ -77,6 +77,23 @@ class ReLUActivation(Activation):
         return result
 
 
+class NoneActivation(Activation):
+    def __init__(self):
+        super().__init__()
+
+    @staticmethod
+    def value(x):
+        return x
+
+    @staticmethod
+    def derivative(x):
+        return x
+
+    @staticmethod
+    def backprop_derivative(x):
+        return x
+
+
 class SoftmaxActivation(Activation):
     def __init__(self):
         super().__init__()
@@ -92,4 +109,4 @@ class SoftmaxActivation(Activation):
 
     @staticmethod
     def backprop_derivative(x):
-        return np.sign(x)
+        raise NotImplemented()

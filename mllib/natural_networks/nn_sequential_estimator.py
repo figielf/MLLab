@@ -42,7 +42,8 @@ class NNSequentialClassifier:
 
     def predict(self, X):
         assert isinstance(X, np.ndarray)
-        p_hat = self._forward(X)
+        layers_output = self._forward(X)
+        p_hat = layers_output[-1]
         y_hat_ind = np.argmax(p_hat, axis=1)
         if self._target_label_size == 1:
             return y_hat_ind
@@ -57,10 +58,12 @@ class NNSequentialClassifier:
         assert isinstance(y_hat, np.ndarray)
         assert isinstance(target, np.ndarray)
         assert target.shape == y_hat.shape
-        assert len(target.shape) == 1 or len(target.shape) == 2
-        if len(target.shape) == 1:
+        if self._target_label_size == 1:
+            assert len(target.shape) == 1
             return (y_hat == target).mean()
-        return (y_hat == target).mean(axis=1)
+        else:
+            assert len(target.shape) == 2
+            return np.all(y_hat == target, axis=1).mean()
 
     def _backward(self, x, y):
         hist = []

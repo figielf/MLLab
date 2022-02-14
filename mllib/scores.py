@@ -31,7 +31,7 @@ def exponential_loss(p_hat, y):
     return np.exp(-y * p_hat).mean()
 
 
-def categorical_crossentropy(target, p_hat):
+def categorical_cross_entropy(target, p_hat):
     # target = [[0, 1, 0], [0, 0, 1]]
     # p_hat = [[0.04, 0.95, 0.01], [0.1, 0.8, 0.1]]
     # returns [-0.05129329, -2.30258509]
@@ -43,4 +43,4 @@ def categorical_crossentropy(target, p_hat):
 
 
 def log_loss(target, p_hat):
-    return categorical_crossentropy(target, p_hat).sum()
+    return -categorical_cross_entropy(target, p_hat).mean()

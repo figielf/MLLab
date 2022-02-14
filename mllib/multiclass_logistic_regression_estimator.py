@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from scores import accuracy
 from scores import log_loss
 from activations import softmax
-
 from utils_ndarray import ndarray_one_hot_encode
 
 
@@ -21,7 +20,7 @@ class MulticlassLogisticRegression:
         self.weights = None
         self.biases = None
 
-    def fit(self, X, Y, w0, b0):
+    def fit(self, X, Y):
         assert isinstance(X, np.ndarray) and len(X.shape) == 2
         assert isinstance(Y, np.ndarray)
         assert X.shape[0] == Y.shape[0]
@@ -40,7 +39,7 @@ class MulticlassLogisticRegression:
         if self._K is None:
             self._K = len(set(Y))
 
-        # w0, b0 = self._initialize_weights()
+        w0, b0 = self._initialize_weights()
         self.weights, self.biases, self._fit_history = self._backward(X, Y_Kd, self._n_steps, w0, b0,
                                                                       self._learning_rate)
 
@@ -65,7 +64,7 @@ class MulticlassLogisticRegression:
 
     def _initialize_weights(self):
         w0 = np.random.randn(self._D, self._K) / np.sqrt(self._D)
-        b0 = np.random.randn(self._D)
+        b0 = np.random.randn(self._K)
         return w0, b0
 
     def _backward(self, x, y, n_steps, w0, b0, learning_rate):
