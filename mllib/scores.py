@@ -15,6 +15,8 @@ def accuracy(target, y_hat):
         y_hat_ind = one_hot_2_vec(y_hat)
         return (target_ind == y_hat_ind).mean()
 
+def error_rate(target, y_hat):
+    return 1 - accuracy(target, y_hat)
 
 def binary_entropy(y):
     # assume y is binary - 0 or 1
@@ -31,7 +33,11 @@ def exponential_loss(p_hat, y):
     return np.exp(-y * p_hat).mean()
 
 
-def categorical_cross_entropy(target, p_hat):
+def binary_cross_entropy(target, p_hat):
+    return -(target * np.log(p_hat) + (1-target) * np.log(1-p_hat)).mean()
+
+
+def multiclass_cross_entropy(target, p_hat):
     # target = [[0, 1, 0], [0, 0, 1]]
     # p_hat = [[0.04, 0.95, 0.01], [0.1, 0.8, 0.1]]
     # returns [-0.05129329, -2.30258509]
@@ -39,8 +45,24 @@ def categorical_cross_entropy(target, p_hat):
     assert isinstance(target, np.ndarray)
     assert target.shape == p_hat.shape
     assert len(target.shape) == 2 and target.shape[1] > 1
-    return np.log(p_hat[np.nonzero(target)])
+    log_p = np.log(p_hat[np.nonzero(target)])
+    return -log_p.mean()
 
 
-def log_loss(target, p_hat):
-    return -categorical_cross_entropy(target, p_hat).mean()
+def r2(y, y_hat):
+    assert isinstance(y, np.ndarray)
+    assert isinstance(y_hat, np.ndarray)
+    return 1 - sse(y, np.array([y.mean()])) / sse(y, y_hat)
+
+
+def sse(y, y_hat):
+    assert isinstance(y, np.ndarray)
+    assert isinstance(y_hat, np.ndarray)
+    assert len(y.shape) == 1 or y.shape[1] == 1
+    err = (y - y_hat).flatten()
+    result = err.dot(err)
+    return result
+
+
+def mse(y, y_hat):
+    return sse(y, y_hat) / len(y)

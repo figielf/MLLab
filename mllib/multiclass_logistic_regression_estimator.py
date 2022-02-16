@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scores import accuracy
-from scores import log_loss
+from scores import multiclass_cross_entropy
 from activations import softmax
 from utils_ndarray import ndarray_one_hot_encode
 
@@ -71,7 +71,7 @@ class MulticlassLogisticRegression:
         hist = []
 
         p_hat = self._forward(x, w0, b0)
-        loss_start = log_loss(y, p_hat)
+        loss_start = multiclass_cross_entropy(y, p_hat)
         acc_start = accuracy(np.argmax(y, axis=1), np.argmax(p_hat, axis=1))
         hist.append(np.array([loss_start, acc_start]))
 
@@ -84,7 +84,7 @@ class MulticlassLogisticRegression:
             b = b + learning_rate * d_b
 
             p_hat = self._forward(x, w, b)
-            loss = log_loss(y, p_hat)
+            loss = multiclass_cross_entropy(y, p_hat)
             acc = accuracy(np.argmax(y, axis=1), np.argmax(p_hat, axis=1))
             hist.append(np.array([loss, acc]))
 

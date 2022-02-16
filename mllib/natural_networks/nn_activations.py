@@ -77,7 +77,7 @@ class ReLUActivation(Activation):
         return result
 
 
-class NoneActivation(Activation):
+class IdentityActivation(Activation):
     def __init__(self):
         super().__init__()
 

@@ -230,6 +230,18 @@ def get_xor_data(N=200, should_plot_data=True):
     return X, Y
 
 
+def get_simple_xor_data(should_plot_data=True):
+    X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+    Y = np.array([0, 1, 1, 0])
+
+    if should_plot_data:
+        plt.figure(figsize=(10, 10))
+        plt.scatter(X[:, 0], X[:, 1], c=Y, s=100, alpha=0.5)
+        plt.title('Training data plot')
+        plt.show()
+    return X, Y
+
+
 def get_donut_data(N=200, should_plot_data=True):
     R_inner = 5
     R_outer = 10
