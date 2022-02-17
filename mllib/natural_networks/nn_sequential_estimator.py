@@ -58,10 +58,11 @@ class NNSequential:
         deltas = []
         delta = y - feature_values_by_layer[-1]
         deltas.append(delta)
-        for l_idx in reversed(range(n_layers - 1)):
-            current_layer = self.layers[l_idx + 1]
-            prev_layer = self.layers[l_idx]
-            delta = current_layer.calc_gradient_delta(delta, prev_layer, feature_values_by_layer[l_idx + 1])
+        for l_idx in reversed(range(1, n_layers)):
+            print('layer:', l_idx - 1)
+            current_layer = self.layers[l_idx]
+            prev_layer = self.layers[l_idx - 1]
+            delta = current_layer.calc_gradient_delta(delta, prev_layer, feature_values_by_layer[l_idx])
             deltas.append(delta)
         deltas.reverse()
 
