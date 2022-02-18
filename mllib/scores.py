@@ -1,5 +1,4 @@
 import numpy as np
-
 from utils_ndarray import one_hot_2_vec
 
 
@@ -15,8 +14,10 @@ def accuracy(target, y_hat):
         y_hat_ind = one_hot_2_vec(y_hat)
         return (target_ind == y_hat_ind).mean()
 
+
 def error_rate(target, y_hat):
     return 1 - accuracy(target, y_hat)
+
 
 def binary_entropy(y):
     # assume y is binary - 0 or 1
@@ -52,7 +53,7 @@ def multiclass_cross_entropy(target, p_hat):
 def r2(y, y_hat):
     assert isinstance(y, np.ndarray)
     assert isinstance(y_hat, np.ndarray)
-    return 1 - sse(y, np.array([y.mean()])) / sse(y, y_hat)
+    return 1 - sse(y, y_hat) / sse(y, np.array([y.mean()]))
 
 
 def sse(y, y_hat):

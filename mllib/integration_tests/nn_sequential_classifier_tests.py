@@ -89,20 +89,24 @@ def run_classification_cloud(Xtrain, Xtest, Ytrain, Ytest, plot_training_history
 def run_classification_xor(X, Y, plot_training_history=True):
     D = 2
     M = 5
+    M1 = 4
+    M2 = 3
     K = 2
-    W1 = np.random.randn(D, M)
-    b1 = np.zeros(M)
-    W2 = np.random.randn(M, K)
-    b2 = np.zeros(K)
-    print(f'generated w0={W1}')
-    print(f'generated b0={b1}')
-    print(f'generated w1={W2}')
-    print(f'generated b1={b2}')
+    # W1 = np.random.randn(D, M)
+    # b1 = np.zeros(M)
+    # W2 = np.random.randn(M, K)
+    # b2 = np.zeros(K)
+    # print(f'generated w0={W1}')
+    # print(f'generated b0={b1}')
+    # print(f'generated w1={W2}')
+    # print(f'generated b1={b2}')
 
-    l0 = DenseLayer(D, M, ReLUActivation(), init_params=[W1, b1])
-    l1 = DenseLayer(M, K, SoftmaxActivation(), init_params=[W2, b2])
+    l0 = DenseLayer(D, M, ReLUActivation())  # , init_params=[W1, b1])
+    l1 = DenseLayer(M, M1, SigmoidActivation())  # , init_params=[W2, b2])
+    l2 = DenseLayer(M1, M2, ReLUActivation())  # , init_params=[W2, b2])
+    lN = DenseLayer(M2, K, SoftmaxActivation())  # , init_params=[W2, b2])
 
-    xor_model = NNSequentialClassifier(layers=[l0, l1], learning_rate=1e-2, n_steps=30000, n_classes=K,
+    xor_model = NNSequentialClassifier(layers=[l0, l1, l2, lN], learning_rate=1e-2, n_steps=2, n_classes=K,
                                        plot_training_history=plot_training_history)
 
     xor_model.fit(X, Y)
@@ -123,7 +127,7 @@ def run_classification_donut(X, Y, plot_training_history=True):
     K = 2
     W1 = np.random.randn(D, M) / np.sqrt(D)
     b1 = np.zeros(M)
-    W2 = np.random.randn(M,K) / np.sqrt(M)
+    W2 = np.random.randn(M, K) / np.sqrt(M)
     b2 = np.zeros(K)
     print(f'generated w0={W1}')
     print(f'generated b0={b1}')
@@ -134,7 +138,7 @@ def run_classification_donut(X, Y, plot_training_history=True):
     l1 = DenseLayer(M, K, SoftmaxActivation(), init_params=[W2, b2])
 
     model = NNSequentialClassifier(layers=[l0, l1], learning_rate=0.00001, n_steps=30000, n_classes=K,
-                                       plot_training_history=plot_training_history)
+                                   plot_training_history=plot_training_history)
 
     model.fit(X, Y)
     assert np.all(model.score(X, model.predict(X))) == 1
@@ -150,11 +154,11 @@ def run_classification_donut(X, Y, plot_training_history=True):
 
 if __name__ == '__main__':
     Xxor, Yxor = get_simple_xor_data(should_plot_data=False)
-    run_classification_xor(Xxor, Yxor, plot_training_history=True)
+    run_classification_xor(Xxor, Yxor, plot_training_history=False)
 
-    Xdonut, Ydonut = get_donut_data(100, should_plot_data=True)
-    run_classification_donut(Xdonut, Ydonut, plot_training_history=True)
+    Xdonut, Ydonut = get_donut_data(100, should_plot_data=False)
+    run_classification_donut(Xdonut, Ydonut, plot_training_history=False)
 
     Xcloud_train, Ycloud_train = get_simple_cloud_data(500)
     Xcloud_test, Ycloud_test = get_simple_cloud_data(100)
-    run_classification_cloud(Xcloud_train, Xcloud_test, Ycloud_train, Ycloud_test, plot_training_history=True)
+    run_classification_cloud(Xcloud_train, Xcloud_test, Ycloud_train, Ycloud_test, plot_training_history=False)

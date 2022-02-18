@@ -15,10 +15,13 @@ class Layer:
     def initialize_params(self):
         pass
 
-    def calc_gradient_delta(self, next_layer_delta, prev_layer, feature_values):
+    def update_params(self, learning_rate, delta, z):
         pass
 
-    def update_params(self, learning_rate, delta, z):
+    def propagate_delta_back(self, delta):
+        pass
+
+    def calc_gradient_delta(self, delta, z):
         pass
 
 
@@ -48,10 +51,12 @@ class DenseLayer(Layer):
             assert out.shape == (x.shape[0], self._output_dim)
         return out
 
-    def _dw(self, z, err):
+    @staticmethod
+    def _dw(z, err):
         return z.T.dot(err)
 
-    def _db(self, err):
+    @staticmethod
+    def _db(err):
         return np.sum(err, axis=0)
 
     def initialize_params(self):
@@ -64,5 +69,15 @@ class DenseLayer(Layer):
         self.weights = self.weights + learning_rate * d_w
         self.biases = self.biases + learning_rate * d_b
 
-    def calc_gradient_delta(self, next_layer_delta, prev_layer, feature_values):
-        return next_layer_delta.dot(self.weights.T) * prev_layer.activation.backprop_derivative(feature_values)
+    def propagate_delta_back(self, delta):
+        if len(delta.shape) == 1 and len(self.weights.shape) == 1:
+            result = np.outer(delta, self.weights)
+        else:
+            assert len(delta.shape) == 2 and len(self.weights.shape) == 2
+            assert delta.shape[1] == self.weights.T.shape[0]
+            result = delta.dot(self.weights.T)
+        return result
+
+    def calc_gradient_delta(self, delta, z):
+        result = delta * self.activation.backprop_derivative(z)
+        return result

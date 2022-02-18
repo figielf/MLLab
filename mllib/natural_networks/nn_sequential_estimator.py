@@ -16,7 +16,7 @@ class NNSequential:
     def fit(self, X, Y):
         pass
 
-    def predict(self, X, Y):
+    def predict(self, X):
         pass
 
     def score(self, X, Y):
@@ -29,13 +29,13 @@ class NNSequential:
         self.fit_history = []
 
     def _backward(self, x, y):
-        print(f'-------------step 0-------------')
+        # print(f'-------------step 0-------------')
         feature_values_by_layer = self._forward(x)
         self._calc_fit_scores(y, feature_values_by_layer[-1])
 
         for step in range(1, self._n_steps + 1):
-            print(f'-------------step {step}-------------')
-            self._update_params(x, y, feature_values_by_layer)
+            # print(f'-------------step {step}-------------')
+            self._update_params(y, feature_values_by_layer)
 
             feature_values_by_layer = self._forward(x)
             self._calc_fit_scores(y, feature_values_by_layer[-1])
@@ -46,29 +46,30 @@ class NNSequential:
 
         return hist
 
-    def _plot_history(history):
+    def _plot_history(self, history):
         pass
 
-    def _calc_fit_scores(self, forward_result):
+    def _calc_fit_scores(self, forward_result, p_hat):
         pass
 
-    def _update_params(self, x, y, feature_values_by_layer):
+    def _update_params(self, y, z_by_layers):
         n_layers = len(self.layers)
 
         deltas = []
-        delta = y - feature_values_by_layer[-1]
-        deltas.append(delta)
-        for l_idx in reversed(range(1, n_layers)):
-            print('layer:', l_idx - 1)
+        deltas.append(y - z_by_layers[-1])
+        for l_idx in reversed(range(n_layers - 1)):
             current_layer = self.layers[l_idx]
-            prev_layer = self.layers[l_idx - 1]
-            delta = current_layer.calc_gradient_delta(delta, prev_layer, feature_values_by_layer[l_idx])
-            deltas.append(delta)
+            current_layer_z = z_by_layers[l_idx + 1]
+            following_layer = self.layers[l_idx + 1]
+            following_layer_delta = deltas[-1]
+
+            back_propagated_delta = following_layer.propagate_delta_back(following_layer_delta)
+            deltas.append(current_layer.calc_gradient_delta(back_propagated_delta,  current_layer_z))
         deltas.reverse()
 
         for l_idx in range(n_layers):
             layer = self.layers[l_idx]
-            layer.update_params(self._learning_rate, deltas[l_idx], feature_values_by_layer[l_idx])
+            layer.update_params(self._learning_rate, deltas[l_idx], z_by_layers[l_idx])
 
     def _forward(self, x):
         out_feature_values_by_layer = [x]
@@ -153,21 +154,24 @@ class NNSequentialClassifier(NNSequential):
 
 
 class NNSequentialRegressor(NNSequential):
-    def __init__(self, layers, n_steps, n_classes=None, learning_rate=0.001,
-                 plot_training_history=False):
+    def __init__(self, layers, n_steps, learning_rate=0.001, plot_training_history=False):
         super().__init__(layers, n_steps, learning_rate, plot_training_history)
 
     def fit(self, X, Y):
         super()._fit_prepare(X, Y)
-        assert len(Y.shape) == 1
+        assert len(Y.shape) == 1 or (len(Y.shape) == 2 and Y.shape[1] == 1)
         self._initial_target_shape = Y.shape
-        return self._backward(X, Y.reshape(-1,1))
+        return self._backward(X, Y.reshape(-1, 1))
 
     def predict(self, X):
         assert isinstance(X, np.ndarray)
         layers_out = self._forward(X)
         y_hat = layers_out[-1]
-        return y_hat
+        assert len(y_hat.shape) == 2 and y_hat.shape[1] == 1
+        if len(self._initial_target_shape) == 1:
+            return y_hat.flatten()
+        else:
+            return y_hat.reshape(-1, 1)
 
     def score(self, X, Y):
         assert isinstance(X, np.ndarray)
@@ -180,7 +184,6 @@ class NNSequentialRegressor(NNSequential):
         y_hat = y_hat.reshape(y.shape)
         loss = mse(y, y_hat)
         R2 = r2(y, y_hat)
-        print(f'loss MSE={loss}, R2={R2}')
         self.fit_history.append(np.array([loss, R2]))
 
     def _plot_history(self, history):
