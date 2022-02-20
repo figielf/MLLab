@@ -42,5 +42,5 @@ class AdaBoostClassifier:
     def score2(self, X, Y):
         f_hat = self.predict_p(X)
         score = (np.sign(f_hat) == Y).mean()
-        loss = exponential_loss(f_hat, Y)
+        loss = exponential_loss(Y, f_hat)
         return score, loss

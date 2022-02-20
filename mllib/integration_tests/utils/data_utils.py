@@ -204,6 +204,7 @@ def get_mnist_data(should_shuffle=True, should_plot_examples=True):
         np.random.shuffle(data)
     X = np.divide(data[:, 1:], 255.0)  # data is from 0..255
     Y = data[:, 0]
+    assert X.shape[1] == 28 * 28
     picture_shape = (28, 28)
 
     if should_plot_examples:

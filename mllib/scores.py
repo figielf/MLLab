@@ -30,7 +30,7 @@ def binary_entropy(y):
     return -p0 * np.log2(p0) - p1 * np.log2(p1)
 
 
-def exponential_loss(p_hat, y):
+def exponential_loss(y, p_hat):
     return np.exp(-y * p_hat).mean()
 
 
