@@ -24,20 +24,20 @@ def run_model(k, X, Y, N=2000):
 
 if __name__ == '__main__':
     print('MNIST data test:')
-    X, Y, _ = get_mnist_data()
+    X, Xtest, Y, Ytest, _pic_shape = get_mnist_data()
     N = 2000
     for k in range(1, 6):
         print(f'{k}NN classifier')
         run_model(k, X.copy(), Y.copy(), N)
 
-    print('MNIST data test:')
+    print('donut data test:')
     N = 2000
     X, Y = get_donut_data(N)
     for k in range(1, 6):
         print(f'{k}NN classifier')
         run_model(k, X.copy(), Y.copy(), N)
 
-    print('MNIST data test:')
+    print('xor data test:')
     N = 2000
     X, Y = get_xor_data(N)
     for k in range(1, 6):

@@ -29,7 +29,7 @@ def run_model(X, Y, N=2000, max_depth=10, max_bucket_size=10, trace_logs=True):
 
 if __name__ == '__main__':
     #  for MNIST
-    X, Y, pic_shape = get_mnist_data()
+    X, Xtest, Y, Ytest, _pic_shape = get_mnist_data()
     idxs = np.logical_or(Y == 0, Y == 1)
     X = X[idxs].copy()
     Y = Y[idxs].copy()

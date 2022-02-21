@@ -4,8 +4,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.utils import shuffle
 from future.utils import iteritems
 from integration_tests.consts import TEST_DATA_PATH
+
+RANDOM_STATE = 42
 
 
 def get_data_dir(file_name):
@@ -196,20 +199,67 @@ def get_mushroom_data(test_size=0.3):
         return X_train_transformed, None, Y_train.values, None
 
 
-def get_mnist_data(should_shuffle=True, should_plot_examples=True):
+def _get_mnist_data_raw():
     print("Reading in and transforming data...")
     df = pd.read_csv(get_data_dir('mnist.csv'))
-    data = df.values
-    if should_shuffle:
-        np.random.shuffle(data)
-    X = np.divide(data[:, 1:], 255.0)  # data is from 0..255
+    data = df.values.astype(np.float32)
+    X = data[:, 1:]
     Y = data[:, 0]
     assert X.shape[1] == 28 * 28
     picture_shape = (28, 28)
+    return X, Y, picture_shape
+
+
+def get_mnist_data(train_size=0.8, should_plot_examples=True):
+    assert train_size >= 0
+    X, Y, picture_shape = _get_mnist_data_raw()
+    X = np.divide(X, 255.0)  # data is from 0..255
+
+    if 0.0 < train_size < 1.0:
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=1-train_size, random_state=RANDOM_STATE)
+    elif train_size == 1:
+        X_train, Y_train = shuffle(X, Y, random_state=RANDOM_STATE)
+        X_test, Y_test = None, None
+    else:
+        if isinstance(train_size, int):
+            X, Y = shuffle(X, Y, random_state=RANDOM_STATE)
+            X_train, Y_train = X[:train_size, :], Y[:train_size]
+            X_test, Y_test = X[train_size:, :], Y[train_size:]
+        else:
+            raise Exception(f'Wrong test size value or type. Value:{train_size}, type:{type(train_size)}')
 
     if should_plot_examples:
         plot_examples(X.reshape((-1, *picture_shape)), Y, cmap='gray', labels=None)
-    return X, Y, picture_shape
+    return X_train, X_test, Y_train, Y_test, picture_shape
+
+
+def get_mnist_normalized_data(train_size=0.8, should_plot_examples=True):
+    assert train_size >= 0
+    X, Y, picture_shape = _get_mnist_data_raw()
+
+    if 0.0 < train_size < 1.0:
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=1-train_size, random_state=RANDOM_STATE)
+    elif train_size == 1:
+        X_train, Y_train = shuffle(X, Y, random_state=RANDOM_STATE)
+        X_test, Y_test = None, None
+    else:
+        if isinstance(train_size, int):
+            X, Y = shuffle(X, Y, random_state=RANDOM_STATE)
+            X_train, Y_train = X[:train_size, :], Y[:train_size]
+            X_test, Y_test = X[train_size:, :], Y[train_size:]
+        else:
+            raise Exception(f'Wrong test size value or type. Value:{train_size}, type:{type(train_size)}')
+
+    # normalize the data
+    mu = X_train.mean(axis=0)
+    std = X_train.std(axis=0)
+    np.place(std, std == 0, 1)
+    X_train = (X_train - mu) / std
+    X_test = (X_test - mu) / std
+
+    if should_plot_examples:
+        plot_examples(X.reshape((-1, *picture_shape)), Y, cmap='gray', labels=None)
+    return X_train, X_test, Y_train, Y_test, picture_shape
 
 
 def get_xor_data(N=200, should_plot_data=True):
