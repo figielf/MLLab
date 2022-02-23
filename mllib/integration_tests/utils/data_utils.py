@@ -8,7 +8,7 @@ from sklearn.utils import shuffle
 from future.utils import iteritems
 from integration_tests.consts import TEST_DATA_PATH
 
-RANDOM_STATE = 42
+RANDOM_STATE = 123
 
 
 def get_data_dir(file_name):
@@ -202,9 +202,9 @@ def get_mushroom_data(test_size=0.3):
 def _get_mnist_data_raw():
     print("Reading in and transforming data...")
     df = pd.read_csv(get_data_dir('mnist.csv'))
-    data = df.values.astype(np.float32)
-    X = data[:, 1:]
-    Y = data[:, 0]
+    data = df.values
+    X = data[:, 1:].astype(np.float32)
+    Y = data[:, 0].astype(int)
     assert X.shape[1] == 28 * 28
     picture_shape = (28, 28)
     return X, Y, picture_shape
@@ -234,7 +234,7 @@ def get_mnist_data(train_size=0.8, should_plot_examples=True):
 
 
 def get_mnist_normalized_data(train_size=0.8, should_plot_examples=True):
-    assert train_size >= 0
+    assert train_size != 0
     X, Y, picture_shape = _get_mnist_data_raw()
 
     if 0.0 < train_size < 1.0:
