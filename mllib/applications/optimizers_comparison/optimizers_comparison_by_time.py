@@ -11,11 +11,11 @@ from scores import accuracy, multiclass_cross_entropy
 from utils_ndarray import ndarray_one_hot_encode, one_hot_2_vec
 
 
-def _dW(x, errors):
+def _dW0(x, errors):
     return x.T.dot(errors)
 
 
-def _db(errors):
+def _db0(errors):
     return errors.sum(axis=0)
 
 
@@ -25,6 +25,23 @@ def _forward(X, W, b):
 
 def _forward_log_odds(X, W, b):
     return X.dot(W) + b
+
+
+class LRfit():
+    def __init__(self, W0, b0):
+        self.W = W0.copy
+        self.b= b0.copy
+
+    def fit(self, x, y, weights, biases, learning_rate, reg):
+    batch_size = x.shape[0]
+    p_hat = self.forward(x, weights, biases)
+    errors = p_hat - y
+    self.W = weights - learning_rate * (_dW(x, errors) / batch_size + reg * weights)
+    self.b = biases - learning_rate * (_db(errors) / batch_size + reg * biases)
+
+    def forward(self, X, W, b):
+        return softmax(_forward_log_odds(X, W, b))
+
 
 
 def history_report(history, should_plot=True, title=None, columns_to_report=['loss_train', 'loss_test', 'acc_train', 'acc_test']):
@@ -75,12 +92,26 @@ def plot_all_histories(histories, titles=None, columns_to_plot=['loss_train', 'l
     plt.show()
 
 
-def _fit_step(x, y, weights, biases, learning_rate, reg):
+def _fit_logistic_regression_step(x, y, weights, biases, learning_rate, reg):
     batch_size = x.shape[0]
     p_hat = _forward(x, weights, biases)
     errors = p_hat - y
-    Wnext = weights - learning_rate * (_dW(x, errors) / batch_size + reg * weights)
-    bnext = biases - learning_rate * (_db(errors) / batch_size + reg * biases)
+    W = weights - learning_rate * (_dW(x, errors) / batch_size + reg * weights)
+    b = biases - learning_rate * (_db(errors) / batch_size + reg * biases)
+
+
+def _fit_ann_step(x, y, weights, biases, learning_rate, reg):
+    batch_size = x.shape[0]
+    p_hat = _forward(x, weights, biases)
+    errors = p_hat - y
+    dW0 = _dW0(x, errors)
+    db0 = _db0(errors)
+    dW0 = _dW1(x, errors)
+    db0 = _db1(errors)
+    W0next = weights - learning_rate * (dW0 / batch_size + reg * weights)
+    b0next = biases - learning_rate * (db0 / batch_size + reg * biases)
+    W1next = weights - learning_rate * (dW1 / batch_size + reg * weights)
+    b1next = biases - learning_rate * (db1 / batch_size + reg * biases)
     return Wnext, bnext
 
 
@@ -110,7 +141,7 @@ def fit_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, learning_rate, reg, c
     for epoch in range(n_epochs):
         if logging_step is not None and (iter_count % logging_step) == 0:
             print(f'----------epoch {epoch}----------')
-        W, b = _fit_step(Xtrain, Ytrain, W, b, learning_rate, reg)
+        W, b = _fit_logistic_regression_step(Xtrain, Ytrain, W, b, learning_rate, reg)
 
         dt = (datetime.now() - t0).total_seconds()
         #if (iter_count % calc_history_step) == 0:
@@ -143,7 +174,7 @@ def fit_minibatch_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, n_batches, 
             idx_from = batch * n_samples
             idx_to = (batch + 1) * n_samples
             Xbatch, Ybatch = Xtrain_shuffled[idx_from:idx_to], Ytrain_shuffled[idx_from:idx_to]
-            W, b = _fit_step(Xbatch, Ybatch, W, b, learning_rate, reg)
+            W, b = _fit_logistic_regression_step(Xbatch, Ybatch, W, b, learning_rate, reg)
 
             dt = (datetime.now() - t0).total_seconds()
             #if (iter_count % calc_history_step) == 0:
@@ -181,7 +212,7 @@ def fit_sgd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, learning_rate, reg, 
         Xtrain_shuffled, Ytrain_shuffled = shuffle(Xtrain, Ytrain)
         for sample in range(n_samples):
             Xbatch, Ybatch = Xtrain_shuffled[sample].reshape(1, -1), Ytrain_shuffled[sample].reshape(1, -1)
-            W, b = _fit_step(Xbatch, Ybatch, W, b, learning_rate, reg)
+            W, b = _fit_logistic_regression_step(Xbatch, Ybatch, W, b, learning_rate, reg)
             if logging_step is not None and (iter_count % logging_step) == 0:
                 print(
                     f'----------epoch {epoch} - sample {sample} out of {n_samples}, progress {sample / n_samples * 100 : .2f}%----------')
