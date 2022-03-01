@@ -5,7 +5,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.utils import shuffle
 
-from activations import softmax
+from activations import softmax, sigmoid
 from integration_tests.utils.data_utils import get_mnist_normalized_data
 from scores import accuracy, multiclass_cross_entropy
 from utils_ndarray import ndarray_one_hot_encode, one_hot_2_vec
@@ -29,8 +29,8 @@ def _forward_log_odds(X, W, b):
 
 class LRfit():
     def __init__(self, W0, b0):
-        self.W = W0.copy
-        self.b= b0.copy
+        self.W = W0.copy()
+        self.b = b0.copy()
 
     def fit_step(self, x, y, learning_rate, reg):
         batch_size = x.shape[0]
@@ -39,27 +39,34 @@ class LRfit():
         self.W = self.W - learning_rate * (_dW0(x, errors) / batch_size + reg * self.W)
         self.b = self.b - learning_rate * (_db0(errors) / batch_size + reg * self.b)
 
-    def forward(self, X):
-        return softmax(_forward_log_odds(X, self.W, self.b))
+    def forward(self, x):
+        return softmax(_forward_log_odds(x, self.W, self.b))
 
 
-def _fit_ann_step(x, y, weights, biases, learning_rate, reg):
-    batch_size = x.shape[0]
-    p_hat = _forward(x, weights, biases)
-    errors = p_hat - y
-    dW0 = _dW0(x, errors)
-    db0 = _db0(errors)
-    dW1 = _dW0(x, errors)
-    db1 = _db0(errors)
-    W0next = weights - learning_rate * (dW0 / batch_size + reg * weights)
-    b0next = biases - learning_rate * (db0 / batch_size + reg * biases)
-    W1next = weights - learning_rate * (dW1 / batch_size + reg * weights)
-    b1next = biases - learning_rate * (db1 / batch_size + reg * biases)
-    return W0next, b0next
+class ANNfit():
+    def __init__(self, W, b):
+        self.W0 = W[0].copy()
+        self.b0 = b[0].copy()
+        self.W1 = W[1].copy()
+        self.b1 = b[1].copy()
+
+    def fit_step(self, x, y, learning_rate, reg):
+        batch_size = x.shape[0]
+        p_hat = self.forward(x)
+        errors = p_hat - y
+        self.W0 = self.W0 - learning_rate * (_dW0(x, errors) / batch_size + reg * self.W0)
+        self.b0 = self.b0 - learning_rate * (_db0(errors) / batch_size + reg * self.b0)
+        self.W1 = self.W1 - learning_rate * (_dW0(x, errors) / batch_size + reg * self.W1)
+        self.b1 = self.b1 - learning_rate * (_db0(errors) / batch_size + reg * self.b1)
+
+    def forward(self, x):
+        z1 = sigmoid(_forward_log_odds(x, self.W0, self.b0))
+        return softmax(_forward_log_odds(z1, self.W1, self.b1))
 
 
-def history_report(history, should_plot=True, title=None, columns_to_report=['loss_train', 'loss_test', 'acc_train', 'acc_test']):
-    print('\ntitle')
+def history_report(history, should_plot=True, title=None,
+                   columns_to_report=['loss_train', 'loss_test', 'acc_train', 'acc_test']):
+    print(f'\n{title}')
     if 'loss_train' in columns_to_report:
         print(f"Final train cost at {history['t'].values[-1]}: {history['loss_train'].values[-1]}")
     if 'loss_test' in columns_to_report:
@@ -106,11 +113,11 @@ def plot_all_histories(histories, titles=None, columns_to_plot=['loss_train', 'l
     plt.show()
 
 
-def _calc_history(step, x, xtest, y, ytest, weights, biases):
-    p_hat = _forward(x, weights, biases)
+def _calc_history(step, x, xtest, y, ytest, forward_model):
+    p_hat = forward_model.forward(x)
     loss = multiclass_cross_entropy(y, p_hat)
     y_hat = np.argmax(p_hat, axis=1)
-    p_hat_test = _forward(xtest, weights, biases)
+    p_hat_test = forward_model.forward(xtest)
     loss_test = multiclass_cross_entropy(ytest, p_hat_test)
     y_hat_test = np.argmax(p_hat_test, axis=1)
     acc = accuracy(one_hot_2_vec(y), y_hat)
@@ -124,6 +131,7 @@ def _fit_logistic_regression_step(x, y, weights, biases, learning_rate, reg):
     errors = p_hat - y
     W = weights - learning_rate * (_dW0(x, errors) / batch_size + reg * weights)
     b = biases - learning_rate * (_db0(errors) / batch_size + reg * biases)
+    return W, b
 
 
 def fit_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, learning_rate, reg, calc_history_step=None,
@@ -143,7 +151,7 @@ def fit_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, learning_rate, reg, c
         W, b = _fit_logistic_regression_step(Xtrain, Ytrain, W, b, learning_rate, reg)
 
         dt = (datetime.now() - t0).total_seconds()
-        #if (iter_count % calc_history_step) == 0:
+        # if (iter_count % calc_history_step) == 0:
         history.append(_calc_history(dt, Xtrain, Xtest, Ytrain, Ytest, W, b))
         iter_count += 1
     history = pd.DataFrame(history, columns=['t', 'loss_train', 'loss_test', 'acc_train', 'acc_test'])
@@ -151,13 +159,35 @@ def fit_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, learning_rate, reg, c
     return W, b, history
 
 
+def fit_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, learning_rate, reg, calc_history_step=None,
+               logging_step=None):
+    print('Train parameters of logistic Regression with gradient descent ...')
+    print(f'simple_logistic_regression - W0.mean()={W0.mean()}, W0.std()={W0.std()}')
+    print(f'simple_logistic_regression - b0.mean()={b0.mean()}, b0.std()={b0.std()}')
+
+    history = []
+    t0 = datetime.now()
+    iter_count = 0
+    lr = LRfit(W0.copy(), b0.copy())
+    for epoch in range(n_epochs):
+        if logging_step is not None and (iter_count % logging_step) == 0:
+            print(f'----------epoch {epoch}----------')
+        lr.fit_step(Xtrain, Ytrain, learning_rate, reg)
+
+        dt = (datetime.now() - t0).total_seconds()
+        # if (iter_count % calc_history_step) == 0:
+        history.append(_calc_history(dt, Xtrain, Xtest, Ytrain, Ytest, lr))
+        iter_count += 1
+    history = pd.DataFrame(history, columns=['t', 'loss_train', 'loss_test', 'acc_train', 'acc_test'])
+    print(f'fit_gd processing time: {dt} seconds, numer of steps: {iter_count}')
+    return lr, history
+
+
 def fit_minibatch_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, n_batches, learning_rate, reg,
                      calc_history_step=None, logging_step=None, calc_history_avg_time=None, calc_history_max_time=None):
     print('Train parameters of logistic Regression with minibatch gradient descent ...')
     print(f'simple_logistic_regression - W0.mean()={W0.mean()}, W0.std()={W0.std()}')
     print(f'simple_logistic_regression - b0.mean()={b0.mean()}, b0.std()={b0.std()}')
-    W = W0.copy()
-    b = b0.copy()
     n_samples = np.ceil(Xtrain.shape[0] / n_batches).astype(int)
 
     history = []
@@ -165,6 +195,7 @@ def fit_minibatch_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, n_batches, 
     hist_time = 0
     iter_count = 0
     stopped = False
+    lr = LRfit(W0.copy(), b0.copy())
     for epoch in range(n_epochs):
         Xtrain_shuffled, Ytrain_shuffled = shuffle(Xtrain, Ytrain)
         for batch in range(n_batches):
@@ -173,13 +204,13 @@ def fit_minibatch_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, n_batches, 
             idx_from = batch * n_samples
             idx_to = (batch + 1) * n_samples
             Xbatch, Ybatch = Xtrain_shuffled[idx_from:idx_to], Ytrain_shuffled[idx_from:idx_to]
-            W, b = _fit_logistic_regression_step(Xbatch, Ybatch, W, b, learning_rate, reg)
+            lr.fit_step(Xbatch, Ybatch, learning_rate, reg)
 
             dt = (datetime.now() - t0).total_seconds()
-            #if (iter_count % calc_history_step) == 0:
+            # if (iter_count % calc_history_step) == 0:
             if dt < calc_history_max_time:
                 if dt - hist_time > calc_history_avg_time:
-                    history.append(_calc_history(dt, Xbatch, Xtest, Ybatch, Ytest, W, b))
+                    history.append(_calc_history(dt, Xbatch, Xtest, Ybatch, Ytest, lr))
                     hist_time = dt
                     iter_count += 1
             else:
@@ -190,7 +221,7 @@ def fit_minibatch_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, n_batches, 
             break
     history = pd.DataFrame(history, columns=['t', 'loss_train', 'loss_test', 'acc_train', 'acc_test'])
     print(f'fit_minibatch_gd processing time - {dt} seconds, numer of steps: {iter_count}')
-    return W, b, history
+    return lr, history
 
 
 def fit_sgd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, learning_rate, reg, calc_history_step=None,
@@ -198,8 +229,6 @@ def fit_sgd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, learning_rate, reg, 
     print('Train parameters of logistic Regression with SGD (stochatic gradient descent) ...')
     print(f'simple_logistic_regression - W0.mean()={W0.mean()}, W0.std()={W0.std()}')
     print(f'simple_logistic_regression - b0.mean()={b0.mean()}, b0.std()={b0.std()}')
-    W = W0.copy()
-    b = b0.copy()
     n_samples = Xtrain.shape[0]
 
     history = []
@@ -207,20 +236,21 @@ def fit_sgd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, learning_rate, reg, 
     hist_time = 0
     iter_count = 0
     stopped = False
+    lr = LRfit(W0.copy(), b0.copy())
     for epoch in range(n_epochs):
         Xtrain_shuffled, Ytrain_shuffled = shuffle(Xtrain, Ytrain)
         for sample in range(n_samples):
             Xbatch, Ybatch = Xtrain_shuffled[sample].reshape(1, -1), Ytrain_shuffled[sample].reshape(1, -1)
-            W, b = _fit_logistic_regression_step(Xbatch, Ybatch, W, b, learning_rate, reg)
+            lr.fit_step(Xbatch, Ybatch, learning_rate, reg)
             if logging_step is not None and (iter_count % logging_step) == 0:
                 print(
                     f'----------epoch {epoch} - sample {sample} out of {n_samples}, progress {sample / n_samples * 100 : .2f}%----------')
 
             dt = (datetime.now() - t0).total_seconds()
-            #if (iter_count % calc_history_step) == 0:
+            # if (iter_count % calc_history_step) == 0:
             if dt < calc_history_max_time:
                 if dt - hist_time > calc_history_avg_time:
-                    history.append(_calc_history(dt, Xbatch, Xtest, Ybatch, Ytest, W, b))
+                    history.append(_calc_history(dt, Xbatch, Xtest, Ybatch, Ytest, lr))
                     hist_time = dt
                     iter_count += 1
             else:
@@ -232,7 +262,7 @@ def fit_sgd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, learning_rate, reg, 
             break
     history = pd.DataFrame(history, columns=['t', 'loss_train', 'loss_test', 'acc_train', 'acc_test'])
     print(f'fit_sgd processing time - {dt} seconds, numer of steps: {iter_count}')
-    return W, b, history
+    return lr, history
 
 
 if __name__ == '__main__':
@@ -260,53 +290,53 @@ if __name__ == '__main__':
     histories = []
     titles = []
 
-    gd_W, gd_b, gd_fit_history = fit_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs=n_epochs,
-                                        learning_rate=0.01, reg=regularization,
-                                        calc_history_step=int(n_epochs/50), logging_step=logging_step)
-    print(f'final - W.mean()={gd_W.mean()}, W0.std()={gd_W.std()}')
-    print(f'final - b.mean()={gd_b.mean()}, b0.std()={gd_b.std()}')
+    dg_model, gd_fit_history = fit_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs=n_epochs,
+                                       learning_rate=0.01, reg=regularization,
+                                       calc_history_step=int(n_epochs / 50), logging_step=logging_step)
+    print(f'final - W.mean()={dg_model.W.mean()}, W0.std()={dg_model.W.std()}')
+    print(f'final - b.mean()={dg_model.b.mean()}, b0.std()={dg_model.b.std()}')
     histories.append(gd_fit_history)
     titles.append('Vanila gradient descent')
     gd_times = gd_fit_history['t'].values
     avg_gd_t = np.mean(gd_times[1:] - gd_times[:-1])
     max_gd_t = gd_times[-1]
 
-
-    mgd_W, mgd_b, mgd_fit_history = fit_minibatch_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0,
-                                                     n_epochs=2*n_epochs, n_batches=n_batches,
+    mgd_model, mgd_fit_history = fit_minibatch_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0,
+                                                     n_epochs=2 * n_epochs, n_batches=n_batches,
                                                      learning_rate=0.001, reg=regularization,
                                                      calc_history_step=None, logging_step=logging_step,
                                                      calc_history_avg_time=avg_gd_t, calc_history_max_time=max_gd_t)
-    print(f'final - W.mean()={mgd_W.mean()}, W0.std()={mgd_W.std()}')
-    print(f'final - b.mean()={mgd_b.mean()}, b0.std()={mgd_b.std()}')
+    print(f'final - W.mean()={mgd_model.W.mean()}, W0.std()={mgd_model.W.std()}')
+    print(f'final - b.mean()={mgd_model.b.mean()}, b0.std()={mgd_model.b.std()}')
     histories.append(mgd_fit_history)
     titles.append('CGD (stochatic gradient descent)')
 
-    #sgd_calc_history_step = int(len(Xtrain) / 20)
+    # sgd_calc_history_step = int(len(Xtrain) / 20)
     sgd_logging_step = int(len(Xtrain) / 20)
-    sgd_W, sgd_b, sgd_fit_history = fit_sgd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs=n_epochs,
+    sgd_model, sgd_fit_history = fit_sgd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs=n_epochs,
                                             learning_rate=0.0001, reg=regularization,
                                             calc_history_step=None, logging_step=sgd_logging_step,
                                             calc_history_avg_time=avg_gd_t, calc_history_max_time=max_gd_t)
-    print(f'final - W.mean()={sgd_W.mean()}, W0.std()={sgd_W.std()}')
-    print(f'final - b.mean()={sgd_b.mean()}, b0.std()={sgd_b.std()}')
+    print(f'final - W.mean()={sgd_model.W.mean()}, W0.std()={sgd_model.W.std()}')
+    print(f'final - b.mean()={sgd_model.b.mean()}, b0.std()={sgd_model.b.std()}')
     histories.append(sgd_fit_history)
     titles.append('CGD (stochatic gradient descent)')
 
-
-    #for history, title in zip(histories, titles):
+    # for history, title in zip(histories, titles):
     #    history_report(history, should_plot=True, title=title)
-    #plot_all_histories(histories, titles, columns_to_plot=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
+    # plot_all_histories(histories, titles, columns_to_plot=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
 
-    history_report(histories[0], should_plot=False, title=titles[0], columns_to_report = ['loss_train', 'loss_test', 'acc_train', 'acc_test'])
-    history_report(histories[1], should_plot=False, title=titles[1], columns_to_report = ['loss_train', 'loss_test', 'acc_train', 'acc_test'])
-    history_report(histories[2], should_plot=False, title=titles[2], columns_to_report = ['loss_test', 'acc_test'])
+    history_report(histories[0], should_plot=False, title=titles[0],
+                   columns_to_report=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
+    history_report(histories[1], should_plot=False, title=titles[1],
+                   columns_to_report=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
+    history_report(histories[2], should_plot=False, title=titles[2], columns_to_report=['loss_test', 'acc_test'])
     n = 3
     plt.figure(figsize=(20, 20))
     create_history_figure(histories[0], titles[0], figure_hight=n, figure_width=2, figure_place_start=1,
-                              columns_to_plot=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
+                          columns_to_plot=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
     create_history_figure(histories[1], titles[1], figure_hight=n, figure_width=2, figure_place_start=3,
-                              columns_to_plot=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
+                          columns_to_plot=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
     create_history_figure(histories[2], titles[2], figure_hight=n, figure_width=2, figure_place_start=5,
-                              columns_to_plot=['loss_test', 'acc_test'])
+                          columns_to_plot=['loss_test', 'acc_test'])
     plt.show()
