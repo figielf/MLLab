@@ -32,16 +32,30 @@ class LRfit():
         self.W = W0.copy
         self.b= b0.copy
 
-    def fit(self, x, y, weights, biases, learning_rate, reg):
+    def fit_step(self, x, y, learning_rate, reg):
+        batch_size = x.shape[0]
+        p_hat = self.forward(x)
+        errors = p_hat - y
+        self.W = self.W - learning_rate * (_dW0(x, errors) / batch_size + reg * self.W)
+        self.b = self.b - learning_rate * (_db0(errors) / batch_size + reg * self.b)
+
+    def forward(self, X):
+        return softmax(_forward_log_odds(X, self.W, self.b))
+
+
+def _fit_ann_step(x, y, weights, biases, learning_rate, reg):
     batch_size = x.shape[0]
-    p_hat = self.forward(x, weights, biases)
+    p_hat = _forward(x, weights, biases)
     errors = p_hat - y
-    self.W = weights - learning_rate * (_dW(x, errors) / batch_size + reg * weights)
-    self.b = biases - learning_rate * (_db(errors) / batch_size + reg * biases)
-
-    def forward(self, X, W, b):
-        return softmax(_forward_log_odds(X, W, b))
-
+    dW0 = _dW0(x, errors)
+    db0 = _db0(errors)
+    dW1 = _dW0(x, errors)
+    db1 = _db0(errors)
+    W0next = weights - learning_rate * (dW0 / batch_size + reg * weights)
+    b0next = biases - learning_rate * (db0 / batch_size + reg * biases)
+    W1next = weights - learning_rate * (dW1 / batch_size + reg * weights)
+    b1next = biases - learning_rate * (db1 / batch_size + reg * biases)
+    return W0next, b0next
 
 
 def history_report(history, should_plot=True, title=None, columns_to_report=['loss_train', 'loss_test', 'acc_train', 'acc_test']):
@@ -92,29 +106,6 @@ def plot_all_histories(histories, titles=None, columns_to_plot=['loss_train', 'l
     plt.show()
 
 
-def _fit_logistic_regression_step(x, y, weights, biases, learning_rate, reg):
-    batch_size = x.shape[0]
-    p_hat = _forward(x, weights, biases)
-    errors = p_hat - y
-    W = weights - learning_rate * (_dW(x, errors) / batch_size + reg * weights)
-    b = biases - learning_rate * (_db(errors) / batch_size + reg * biases)
-
-
-def _fit_ann_step(x, y, weights, biases, learning_rate, reg):
-    batch_size = x.shape[0]
-    p_hat = _forward(x, weights, biases)
-    errors = p_hat - y
-    dW0 = _dW0(x, errors)
-    db0 = _db0(errors)
-    dW0 = _dW1(x, errors)
-    db0 = _db1(errors)
-    W0next = weights - learning_rate * (dW0 / batch_size + reg * weights)
-    b0next = biases - learning_rate * (db0 / batch_size + reg * biases)
-    W1next = weights - learning_rate * (dW1 / batch_size + reg * weights)
-    b1next = biases - learning_rate * (db1 / batch_size + reg * biases)
-    return Wnext, bnext
-
-
 def _calc_history(step, x, xtest, y, ytest, weights, biases):
     p_hat = _forward(x, weights, biases)
     loss = multiclass_cross_entropy(y, p_hat)
@@ -125,6 +116,14 @@ def _calc_history(step, x, xtest, y, ytest, weights, biases):
     acc = accuracy(one_hot_2_vec(y), y_hat)
     acc_test = accuracy(one_hot_2_vec(ytest), y_hat_test)
     return np.array([step, loss, loss_test, acc, acc_test])
+
+
+def _fit_logistic_regression_step(x, y, weights, biases, learning_rate, reg):
+    batch_size = x.shape[0]
+    p_hat = _forward(x, weights, biases)
+    errors = p_hat - y
+    W = weights - learning_rate * (_dW0(x, errors) / batch_size + reg * weights)
+    b = biases - learning_rate * (_db0(errors) / batch_size + reg * biases)
 
 
 def fit_gd(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, learning_rate, reg, calc_history_step=None,
