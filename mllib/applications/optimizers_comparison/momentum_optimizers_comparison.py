@@ -354,18 +354,18 @@ if __name__ == '__main__':
     b0 = np.zeros(M)
     W1 = np.random.randn(M, K) / np.sqrt(M)
     b1 = np.zeros(K)
-    regularization = 1.
+    regularization = 0.01
     n_epochs = 20
-    logging_step = 50
-    n_batches = 50
+    logging_step = 500
+    n_batches = 500
 
     histories = []
     titles = []
 
 
     mgd_model, mgd_fit_history = fit_gd(Xtrain, Xtest, Ytrain, Ytest, [W0, W1], [b0, b1],
-                                                     n_epochs=2 * n_epochs, n_batches=n_batches,
-                                                     learning_rate=0.001, reg=regularization,
+                                                     n_epochs=n_epochs, n_batches=n_batches,
+                                                     learning_rate=0.0001, reg=regularization,
                                                      calc_history_step=logging_step, logging_step=logging_step)
     print(f'final - W0.mean()={mgd_model.W0.mean()}, W0.std()={mgd_model.W0.std()}')
     print(f'final - b0.mean()={mgd_model.b0.mean()}, b0.std()={mgd_model.b0.std()}')
@@ -376,8 +376,8 @@ if __name__ == '__main__':
 
 
     mgdm_model, mgdm_fit_history = fit_gd_with_momentum(Xtrain, Xtest, Ytrain, Ytest, [W0, W1], [b0, b1],
-                                                     n_epochs=2 * n_epochs, n_batches=n_batches,
-                                                     learning_rate=0.001, mu=0.9, reg=regularization,
+                                                     n_epochs=n_epochs, n_batches=n_batches,
+                                                     learning_rate=0.0001, mu=0.9, reg=regularization,
                                                      calc_history_step=logging_step, logging_step=logging_step)
     print(f'final - W0.mean()={mgdm_model.W0.mean()}, W0.std()={mgdm_model.W0.std()}')
     print(f'final - b0.mean()={mgdm_model.b0.mean()}, b0.std()={mgdm_model.b0.std()}')
@@ -388,8 +388,8 @@ if __name__ == '__main__':
 
 
     mgdnm_model, mgdnm_fit_history = fit_gd_with_nesterov_momentum(Xtrain, Xtest, Ytrain, Ytest, [W0, W1], [b0, b1],
-                                                     n_epochs=2 * n_epochs, n_batches=n_batches,
-                                                     learning_rate=0.001, mu=0.9, reg=regularization,
+                                                     n_epochs=n_epochs, n_batches=n_batches,
+                                                     learning_rate=0.0001, mu=0.9, reg=regularization,
                                                      calc_history_step=logging_step, logging_step=logging_step)
     print(f'final - W0.mean()={mgdnm_model.W0.mean()}, W0.std()={mgdnm_model.W0.std()}')
     print(f'final - b0.mean()={mgdnm_model.b0.mean()}, b0.std()={mgdnm_model.b0.std()}')
