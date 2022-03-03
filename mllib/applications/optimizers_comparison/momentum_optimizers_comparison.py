@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -182,8 +180,7 @@ class ANNfit_by_gd_with_nesterov_momentum():
         return y_hat
 
 
-def history_report(history, should_plot=True, title=None,
-                   columns_to_report=['loss_train', 'loss_test', 'acc_train', 'acc_test']):
+def history_report(history, title=None, columns_to_report=['loss_train', 'loss_test', 'acc_train', 'acc_test']):
     print(f'\n{title}')
     if 'loss_train' in columns_to_report:
         print(f"Final train cost at {history['t'].values[-1]}: {history['loss_train'].values[-1]}")
@@ -194,41 +191,26 @@ def history_report(history, should_plot=True, title=None,
     if 'acc_test' in columns_to_report:
         print(f"Final test error rate at {history['t'].values[-1]}: {1 - history['acc_test'].values[-1]}")
 
-    if should_plot:
-        plt.figure(figsize=(16, 16))
-        create_history_figure(history, title, columns_to_plot=columns_to_report)
-        plt.show()
 
-
-def create_history_figure(history, title=None, figure_hight=2, figure_width=1, figure_place_start=1,
-                          columns_to_plot=['loss_train', 'loss_test', 'acc_train', 'acc_test']):
-    plt.subplot(figure_hight, figure_width, figure_place_start)
-    if 'loss_train' in columns_to_plot:
-        plt.plot(history['t'], history['loss_train'], label='train loss')
-    if 'loss_test' in columns_to_plot:
-        plt.plot(history['t'], history['loss_test'], label='test loss')
-    if title is not None:
-        plt.title(title + ' cost function per iteration')
-    plt.legend()
-    plt.subplot(figure_hight, figure_width, figure_place_start + 1)
-    if 'acc_train' in columns_to_plot:
-        plt.plot(history['t'], 1 - history['acc_train'], label='train error rate')
-    if 'acc_test' in columns_to_plot:
-        plt.plot(history['t'], 1 - history['acc_test'], label='test error rate')
-    if title is not None:
-        plt.title(title + ' error rate per iteration')
-    plt.legend()
-
-
-def plot_all_histories(histories, titles=None, columns_to_plot=['loss_train', 'loss_test', 'acc_train', 'acc_test']):
-    n = len(histories)
-    plt.figure(figsize=(20, 20))
-    i = 1
+def report_histories(histories, titles, columns_to_report=['loss_train', 'loss_test', 'acc_train', 'acc_test'], columns_to_plot=['loss_train', 'loss_test', 'acc_train', 'acc_test']):
+    assert len(histories) == len(titles)
     for history, title in zip(histories, titles):
-        create_history_figure(history, title, figure_hight=n, figure_width=2, figure_place_start=i,
-                              columns_to_plot=columns_to_plot)
-        i += 2
-    plt.show()
+        history_report(history, title=title, columns_to_report=columns_to_report)
+
+    if columns_to_plot is not None:
+        n_plots = len(columns_to_plot)
+        figure_hight = int(np.ceil(n_plots / 2))
+        plt.figure(figsize=(20, 20))
+        i = 1
+        for col in columns_to_plot:
+            plt.subplot(figure_hight, 2, i)
+            plt.title(col)
+            for history, title in zip(histories, titles):
+                if col in history.columns:
+                    plt.plot(history['t'], history[col], label=title)
+            plt.legend()
+            i += 1
+        plt.show()
 
 
 def _calc_history(step, x, xtest, y, ytest, forward_model):
@@ -356,17 +338,16 @@ if __name__ == '__main__':
     b1 = np.zeros(K)
     regularization = 0.01
     n_epochs = 20
-    logging_step = 500
-    n_batches = 500
+    report_step = 50
+    n_batches = 50
 
     histories = []
     titles = []
 
-
     mgd_model, mgd_fit_history = fit_gd(Xtrain, Xtest, Ytrain, Ytest, [W0, W1], [b0, b1],
                                                      n_epochs=n_epochs, n_batches=n_batches,
-                                                     learning_rate=0.0001, reg=regularization,
-                                                     calc_history_step=logging_step, logging_step=logging_step)
+                                                     learning_rate=0.001, reg=regularization,
+                                                     calc_history_step=report_step, logging_step=report_step)
     print(f'final - W0.mean()={mgd_model.W0.mean()}, W0.std()={mgd_model.W0.std()}')
     print(f'final - b0.mean()={mgd_model.b0.mean()}, b0.std()={mgd_model.b0.std()}')
     print(f'final - W1.mean()={mgd_model.W1.mean()}, W1.std()={mgd_model.W1.std()}')
@@ -374,11 +355,10 @@ if __name__ == '__main__':
     histories.append(mgd_fit_history)
     titles.append('Minibatch gradient descent')
 
-
     mgdm_model, mgdm_fit_history = fit_gd_with_momentum(Xtrain, Xtest, Ytrain, Ytest, [W0, W1], [b0, b1],
                                                      n_epochs=n_epochs, n_batches=n_batches,
                                                      learning_rate=0.0001, mu=0.9, reg=regularization,
-                                                     calc_history_step=logging_step, logging_step=logging_step)
+                                                     calc_history_step=report_step, logging_step=report_step)
     print(f'final - W0.mean()={mgdm_model.W0.mean()}, W0.std()={mgdm_model.W0.std()}')
     print(f'final - b0.mean()={mgdm_model.b0.mean()}, b0.std()={mgdm_model.b0.std()}')
     print(f'final - W1.mean()={mgdm_model.W1.mean()}, W1.std()={mgdm_model.W1.std()}')
@@ -386,11 +366,10 @@ if __name__ == '__main__':
     histories.append(mgdm_fit_history)
     titles.append('Minibatch gradient descent with momentum')
 
-
     mgdnm_model, mgdnm_fit_history = fit_gd_with_nesterov_momentum(Xtrain, Xtest, Ytrain, Ytest, [W0, W1], [b0, b1],
                                                      n_epochs=n_epochs, n_batches=n_batches,
                                                      learning_rate=0.0001, mu=0.9, reg=regularization,
-                                                     calc_history_step=logging_step, logging_step=logging_step)
+                                                     calc_history_step=report_step, logging_step=report_step)
     print(f'final - W0.mean()={mgdnm_model.W0.mean()}, W0.std()={mgdnm_model.W0.std()}')
     print(f'final - b0.mean()={mgdnm_model.b0.mean()}, b0.std()={mgdnm_model.b0.std()}')
     print(f'final - W1.mean()={mgdnm_model.W1.mean()}, W1.std()={mgdnm_model.W1.std()}')
@@ -398,24 +377,5 @@ if __name__ == '__main__':
     histories.append(mgdnm_fit_history)
     titles.append('Minibatch gradient descent with nesterov momentum')
 
-
-
-    # for history, title in zip(histories, titles):
-    #    history_report(history, should_plot=True, title=title)
-    # plot_all_histories(histories, titles, columns_to_plot=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
-
-    history_report(histories[0], should_plot=False, title=titles[0],
-                   columns_to_report=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
-    history_report(histories[1], should_plot=False, title=titles[1],
-                   columns_to_report=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
-    history_report(histories[2], should_plot=False, title=titles[2],
-                   columns_to_report=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
-    n = 3
-    plt.figure(figsize=(20, 20))
-    create_history_figure(histories[0], titles[0], figure_hight=n, figure_width=2, figure_place_start=1,
-                          columns_to_plot=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
-    create_history_figure(histories[1], titles[1], figure_hight=n, figure_width=2, figure_place_start=3,
-                          columns_to_plot=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
-    create_history_figure(histories[2], titles[2], figure_hight=n, figure_width=2, figure_place_start=5,
-                          columns_to_plot=['loss_train', 'loss_test', 'acc_train', 'acc_test'])
-    plt.show()
+    cols = ['loss_train', 'loss_test', 'acc_train', 'acc_test']
+    report_histories(histories, titles, columns_to_report=cols, columns_to_plot=cols)
