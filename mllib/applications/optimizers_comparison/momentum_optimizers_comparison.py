@@ -33,10 +33,21 @@ def _forward_log_odds(x, W, b):
 
 class ANNfit():
     def __init__(self, W, b):
-        self.W0 = W[0].copy()
-        self.b0 = b[0].copy()
         self.W1 = W[1].copy()
         self.b1 = b[1].copy()
+        self.W0 = W[0].copy()
+        self.b0 = b[0].copy()
+
+    def _dLoss(self, x, y, reg):
+        batch_size = x.shape[0]
+        z, p_hat = self._forward(x)
+        errors = p_hat - y
+
+        dW1 = _dW1(z, errors) / batch_size + reg * self.W1
+        db1 = _db1(errors) / batch_size + reg * self.b1
+        dW0 = _dW0(x, z, errors, self.W1) / batch_size + reg * self.W0
+        db0 = _db0(z, errors, self.W1) / batch_size + reg * self.b0
+        return dW1, db1, dW0, db0
 
     def _forward(self, x):
         z1 = sigmoid(_forward_log_odds(x, self.W0, self.b0))
@@ -52,131 +63,207 @@ class ANNfit_by_gd(ANNfit):
         super().__init__(W, b)
 
     def fit_step(self, x, y, learning_rate, reg):
-        batch_size = x.shape[0]
-        z, p_hat = self._forward(x)
-        errors = p_hat - y
-        self.W1 = self.W1 - learning_rate * (_dW1(z, errors) / batch_size + reg * self.W1)
-        self.b1 = self.b1 - learning_rate * (_db1(errors) / batch_size + reg * self.b1)
-        self.W0 = self.W0 - learning_rate * (_dW0(x, z, errors, self.W1) / batch_size + reg * self.W0)
-        self.b0 = self.b0 - learning_rate * (_db0(z, errors, self.W1) / batch_size + reg * self.b0)
+        dW1, db1, dW0, db0 = self._dLoss(x, y, reg)
+
+        self.W1 = self.W1 - learning_rate * dW1
+        self.b1 = self.b1 - learning_rate * db1
+        self.W0 = self.W0 - learning_rate * dW0
+        self.b0 = self.b0 - learning_rate * db0
 
 
 class ANNfit_by_gd_with_momentum(ANNfit):
     def __init__(self, W, b):
         super().__init__(W, b)
-        self.vW0 = np.zeros(self.W0.shape)
-        self.vb0 = np.zeros(self.b0.shape)
         self.vW1 = np.zeros(self.W1.shape)
         self.vb1 = np.zeros(self.b1.shape)
+        self.vW0 = np.zeros(self.W0.shape)
+        self.vb0 = np.zeros(self.b0.shape)
 
     def fit_step(self, x, y, learning_rate, mu, reg):
-        batch_size = x.shape[0]
-        z, p_hat = self._forward(x)
-        errors = p_hat - y
+        dW1, db1, dW0, db0 = self._dLoss(x, y, reg)
 
-        dW1 = (_dW1(z, errors) / batch_size + reg * self.W1)
-        db1 = (_db1(errors) / batch_size + reg * self.b1)
-        dW0 = (_dW0(x, z, errors, self.W1) / batch_size + reg * self.W0)
-        db0 = (_db0(z, errors, self.W1) / batch_size + reg * self.b0)
-
-        self.vW0 = mu * self.vW0 - learning_rate * dW0
-        self.vb0 = mu * self.vb0 - learning_rate * db0
         self.vW1 = mu * self.vW1 - learning_rate * dW1
         self.vb1 = mu * self.vb1 - learning_rate * db1
+        self.vW0 = mu * self.vW0 - learning_rate * dW0
+        self.vb0 = mu * self.vb0 - learning_rate * db0
 
-        self.W0 = self.W0 + self.vW0
-        self.b0 = self.b0 + self.vb0
         self.W1 = self.W1 + self.vW1
         self.b1 = self.b1 + self.vb1
+        self.W0 = self.W0 + self.vW0
+        self.b0 = self.b0 + self.vb0
 
 
 class ANNfit_by_gd_with_nesterov_momentum(ANNfit):
     def __init__(self, W, b):
         super().__init__(W, b)
-        self.vW0 = np.zeros(self.W0.shape)
-        self.vb0 = np.zeros(self.b0.shape)
         self.vW1 = np.zeros(self.W1.shape)
         self.vb1 = np.zeros(self.b1.shape)
+        self.vW0 = np.zeros(self.W0.shape)
+        self.vb0 = np.zeros(self.b0.shape)
 
     def fit_step(self, x, y, learning_rate, mu, reg):
-        batch_size = x.shape[0]
-        z, p_hat = self._forward(x)
-        errors = p_hat - y
+        dW1, db1, dW0, db0 = self._dLoss(x, y, reg)
 
-        dW1 = (_dW1(z, errors) / batch_size + reg * self.W1)
-        db1 = (_db1(errors) / batch_size + reg * self.b1)
-        dW0 = (_dW0(x, z, errors, self.W1) / batch_size + reg * self.W0)
-        db0 = (_db0(z, errors, self.W1) / batch_size + reg * self.b0)
-
-        self.vW0 = mu * self.vW0 - learning_rate * dW0
-        self.vb0 = mu * self.vb0 - learning_rate * db0
         self.vW1 = mu * self.vW1 - learning_rate * dW1
         self.vb1 = mu * self.vb1 - learning_rate * db1
+        self.vW0 = mu * self.vW0 - learning_rate * dW0
+        self.vb0 = mu * self.vb0 - learning_rate * db0
 
-        self.W0 = self.W0 + self.vW0 - learning_rate * dW0
-        self.b0 = self.b0 + self.vb0 - learning_rate * db0
         self.W1 = self.W1 + self.vW1 - learning_rate * dW1
         self.b1 = self.b1 + self.vb1 - learning_rate * db1
+        self.W0 = self.W0 + self.vW0 - learning_rate * dW0
+        self.b0 = self.b0 + self.vb0 - learning_rate * db0
 
 
 class ANNfit_by_adagrad(ANNfit):
     def __init__(self, W, b):
         super().__init__(W, b)
-        self.cacheW0 = np.ones(self.W0.shape)
-        self.cacheb0 = np.ones(self.b0.shape)
         self.cacheW1 = np.ones(self.W1.shape)
         self.cacheb1 = np.ones(self.b1.shape)
+        self.cacheW0 = np.ones(self.W0.shape)
+        self.cacheb0 = np.ones(self.b0.shape)
         self.eps = 1e-10
 
     def fit_step(self, x, y, learning_rate, reg):
-        batch_size = x.shape[0]
-        z, p_hat = self._forward(x)
-        errors = p_hat - y
+        dW1, db1, dW0, db0 = self._dLoss(x, y, reg)
 
-        dW1 = _dW1(z, errors) / batch_size + reg * self.W1
-        db1 = _db1(errors) / batch_size + reg * self.b1
-        dW0 = _dW0(x, z, errors, self.W1) / batch_size + reg * self.W0
-        db0 = _db0(z, errors, self.W1) / batch_size + reg * self.b0
+        self.cacheW1 = self.cacheW1 + dW1 ** 2
+        self.cacheb1 = self.cacheb1 + db1 ** 2
+        self.cacheW0 = self.cacheW0 + dW0 ** 2
+        self.cacheb0 = self.cacheb0 + db0 ** 2
 
-        self.cacheW1 = self.cacheW1 + dW1 * dW1
-        self.cacheb1 = self.cacheb1 + db1 * db1
-        self.cacheW0 = self.cacheW0 + dW0 * dW0
-        self.cacheb0 = self.cacheb0 + db0 * db0
+        lrW1 = learning_rate / (np.sqrt(self.cacheW1) + self.eps)
+        lrb1 = learning_rate / (np.sqrt(self.cacheb1) + self.eps)
+        lrW0 = learning_rate / (np.sqrt(self.cacheW0) + self.eps)
+        lrb0 = learning_rate / (np.sqrt(self.cacheb0) + self.eps)
 
-        self.W1 = self.W1 - learning_rate * dW1 / np.sqrt(self.cacheW1 + self.eps)
-        self.b1 = self.b1 - learning_rate * db1 / np.sqrt(self.cacheb1 + self.eps)
-        self.W0 = self.W0 - learning_rate * dW0 / np.sqrt(self.cacheW0 + self.eps)
-        self.b0 = self.b0 - learning_rate * db0 / np.sqrt(self.cacheb0 + self.eps)
+        self.W1 = self.W1 - lrW1 * dW1
+        self.b1 = self.b1 - lrb1 * db1
+        self.W0 = self.W0 - lrW0 * dW0
+        self.b0 = self.b0 - lrb0 * db0
 
 
 class ANNfit_by_RMSprop(ANNfit):
     def __init__(self, W, b):
         super().__init__(W, b)
-        self.cacheW0 = np.ones(self.W0.shape)
-        self.cacheb0 = np.ones(self.b0.shape)
         self.cacheW1 = np.ones(self.W1.shape)
         self.cacheb1 = np.ones(self.b1.shape)
+        self.cacheW0 = np.ones(self.W0.shape)
+        self.cacheb0 = np.ones(self.b0.shape)
+        self.vW1 = np.zeros(self.W1.shape)
+        self.vb1 = np.zeros(self.b1.shape)
+        self.vW0 = np.zeros(self.W0.shape)
+        self.vb0 = np.zeros(self.b0.shape)
         self.eps = 1e-10
 
     def fit_step(self, x, y, learning_rate, decay_rate, reg):
-        batch_size = x.shape[0]
-        z, p_hat = self._forward(x)
-        errors = p_hat - y
+        dW1, db1, dW0, db0 = self._dLoss(x, y, reg)
 
-        dW1 = _dW1(z, errors) / batch_size + reg * self.W1
-        db1 = _db1(errors) / batch_size + reg * self.b1
-        dW0 = _dW0(x, z, errors, self.W1) / batch_size + reg * self.W0
-        db0 = _db0(z, errors, self.W1) / batch_size + reg * self.b0
+        self.cacheW1 = decay_rate * self.cacheW1 + (1 - decay_rate) * dW1 ** 2
+        self.cacheb1 = decay_rate * self.cacheb1 + (1 - decay_rate) * db1 ** 2
+        self.cacheW0 = decay_rate * self.cacheW0 + (1 - decay_rate) * dW0 ** 2
+        self.cacheb0 = decay_rate * self.cacheb0 + (1 - decay_rate) * db0 ** 2
 
-        self.cacheW1 = decay_rate * self.cacheW1 + (1 - decay_rate) * dW1 * dW1
-        self.cacheb1 = decay_rate * self.cacheb1 + (1 - decay_rate) * db1 * db1
-        self.cacheW0 = decay_rate * self.cacheW0 + (1 - decay_rate) * dW0 * dW0
-        self.cacheb0 = decay_rate * self.cacheb0 + (1 - decay_rate) * db0 * db0
+        lrW1 = learning_rate / (np.sqrt(self.cacheW1) + self.eps)
+        lrb1 = learning_rate / (np.sqrt(self.cacheb1) + self.eps)
+        lrW0 = learning_rate / (np.sqrt(self.cacheW0) + self.eps)
+        lrb0 = learning_rate / (np.sqrt(self.cacheb0) + self.eps)
 
-        self.W1 = self.W1 - learning_rate * dW1 / np.sqrt(self.cacheW1 + self.eps)
-        self.b1 = self.b1 - learning_rate * db1 / np.sqrt(self.cacheb1 + self.eps)
-        self.W0 = self.W0 - learning_rate * dW0 / np.sqrt(self.cacheW0 + self.eps)
-        self.b0 = self.b0 - learning_rate * db0 / np.sqrt(self.cacheb0 + self.eps)
+        self.W1 = self.W1 - lrW1 * dW1
+        self.b1 = self.b1 - lrb1 * db1
+        self.W0 = self.W0 - lrW0 * dW0
+        self.b0 = self.b0 - lrb0 * db0
+
+
+class ANNfit_by_RMSprop_with_momentum(ANNfit):
+    def __init__(self, W, b):
+        super().__init__(W, b)
+        self.cacheW1 = np.ones(self.W1.shape)
+        self.cacheb1 = np.ones(self.b1.shape)
+        self.cacheW0 = np.ones(self.W0.shape)
+        self.cacheb0 = np.ones(self.b0.shape)
+        self.vW1 = np.zeros(self.W1.shape)
+        self.vb1 = np.zeros(self.b1.shape)
+        self.vW0 = np.zeros(self.W0.shape)
+        self.vb0 = np.zeros(self.b0.shape)
+        self.eps = 1e-10
+
+    def fit_step(self, x, y, learning_rate, decay_rate, mu, reg):
+        dW1, db1, dW0, db0 = self._dLoss(x, y, reg)
+
+        self.cacheW1 = decay_rate * self.cacheW1 + (1 - decay_rate) * dW1 ** 2
+        self.cacheb1 = decay_rate * self.cacheb1 + (1 - decay_rate) * db1 ** 2
+        self.cacheW0 = decay_rate * self.cacheW0 + (1 - decay_rate) * dW0 ** 2
+        self.cacheb0 = decay_rate * self.cacheb0 + (1 - decay_rate) * db0 ** 2
+
+        lrW1 = learning_rate / (np.sqrt(self.cacheW1) + self.eps)
+        lrb1 = learning_rate / (np.sqrt(self.cacheb1) + self.eps)
+        lrW0 = learning_rate / (np.sqrt(self.cacheW0) + self.eps)
+        lrb0 = learning_rate / (np.sqrt(self.cacheb0) + self.eps)
+
+        self.vW1 = mu * self.vW1 + (1 - mu) * lrW1 * dW1
+        self.vb1 = mu * self.vb1 + (1 - mu) * lrb1 * db1
+        self.vW0 = mu * self.vW0 + (1 - mu) * lrW0 * dW0
+        self.vb0 = mu * self.vb0 + (1 - mu) * lrb0 * db0
+
+        self.W1 = self.W1 - self.vW1
+        self.b1 = self.b1 - self.vb1
+        self.W0 = self.W0 - self.vW0
+        self.b0 = self.b0 - self.vb0
+
+
+class ANNfit_by_adam(ANNfit):
+    def __init__(self, W, b):
+        super().__init__(W, b)
+        self.mW1 = np.zeros(self.W1.shape)
+        self.mb1 = np.zeros(self.b1.shape)
+        self.mW0 = np.zeros(self.W0.shape)
+        self.mb0 = np.zeros(self.b0.shape)
+        self.vW1 = np.zeros(self.W1.shape)
+        self.vb1 = np.zeros(self.b1.shape)
+        self.vW0 = np.zeros(self.W0.shape)
+        self.vb0 = np.zeros(self.b0.shape)
+        self.eps = 1e-10
+
+    def fit_step(self, x, y, t, learning_rate, beta1, beta2, reg):
+        dW1, db1, dW0, db0 = self._dLoss(x, y, reg)
+
+        # estimate E[dLoss] by moving average
+        self.mW1 = beta1 * self.mW1 + (1 - beta1) * dW1
+        self.mb1 = beta1 * self.mb1 + (1 - beta1) * db1
+        self.mW0 = beta1 * self.mW0 + (1 - beta1) * dW0
+        self.mb0 = beta1 * self.mb0 + (1 - beta1) * db0
+
+        # estimate E[dLoss^2] by moving average
+        self.vW1 = beta2 * self.vW1 + (1 - beta2) * dW1 ** 2
+        self.vb1 = beta2 * self.vb1 + (1 - beta2) * db1 ** 2
+        self.vW0 = beta2 * self.vW0 + (1 - beta2) * dW0 ** 2
+        self.vb0 = beta2 * self.vb0 + (1 - beta2) * db0 ** 2
+
+        # bias correction
+        correction_factor_beta1 = 1 - beta1 ** t
+        mW1_hat = self.mW1 / correction_factor_beta1
+        mb1_hat = self.mb1 / correction_factor_beta1
+        mW0_hat = self.mW0 / correction_factor_beta1
+        mb0_hat = self.mb0 / correction_factor_beta1
+
+        correction_factor_beta2 = 1 - beta2 ** t
+        vW1_hat = self.vW1 / correction_factor_beta2
+        vb1_hat = self.vb1 / correction_factor_beta2
+        vW0_hat = self.vW0 / correction_factor_beta2
+        vb0_hat = self.vb0 / correction_factor_beta2
+
+        # apply adaptive learning rate change
+        lrW1 = learning_rate / (np.sqrt(vW1_hat) + self.eps)
+        lrb1 = learning_rate / (np.sqrt(vb1_hat) + self.eps)
+        lrW0 = learning_rate / (np.sqrt(vW0_hat) + self.eps)
+        lrb0 = learning_rate / (np.sqrt(vb0_hat) + self.eps)
+
+        # update params
+        self.W1 = self.W1 - lrW1 * mW1_hat
+        self.b1 = self.b1 - lrb1 * mb1_hat
+        self.W0 = self.W0 - lrW0 * mW0_hat
+        self.b0 = self.b0 - lrb0 * mb0_hat
 
 
 def history_report(history, title=None, columns_to_report=['loss_train', 'loss_test', 'acc_train', 'acc_test']):
@@ -374,6 +461,67 @@ def fit_rmsprop(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, n_batches, learn
     return ann, history
 
 
+def fit_rmsprop_with_momentum(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, n_batches, learning_rate, decay_rate, mu, reg,
+                     calc_history_step=None, logging_step=None):
+    print('Train parameters of ANN with minibatch gradient descent with nesterov momentum ...')
+    print(f'fit_gd - W0.mean()={W0[0].mean()}, W0.std()={W0[0].std()}')
+    print(f'fit_gd - b0.mean()={b0[0].mean()}, b0.std()={b0[0].std()}')
+    print(f'fit_gd - W1.mean()={W0[1].mean()}, W0.std()={W0[1].std()}')
+    print(f'fit_gd - b1.mean()={b0[1].mean()}, b0.std()={b0[1].std()}')
+    n_samples = np.ceil(Xtrain.shape[0] / n_batches).astype(int)
+
+    history = []
+    iter_count = 0
+    ann = ANNfit_by_RMSprop_with_momentum(W0, b0)
+    for epoch in range(n_epochs):
+        Xtrain_shuffled, Ytrain_shuffled = shuffle(Xtrain, Ytrain)
+        for batch in range(n_batches):
+            if logging_step is not None and (iter_count % logging_step) == 0:
+                print(f'----------epoch {epoch} - batch {batch}----------')
+            idx_from = batch * n_samples
+            idx_to = (batch + 1) * n_samples
+            Xbatch, Ybatch = Xtrain_shuffled[idx_from:idx_to], Ytrain_shuffled[idx_from:idx_to]
+            ann.fit_step(Xbatch, Ybatch, learning_rate, decay_rate, mu, reg)
+
+            if (iter_count % calc_history_step) == 0:
+                history.append(_calc_history(iter_count, Xbatch, Xtest, Ybatch, Ytest, ann))
+            iter_count += 1
+    history = pd.DataFrame(history, columns=['t', 'loss_train', 'loss_test', 'acc_train', 'acc_test'])
+    print(f'fit_minibatch_gd numer of steps: {iter_count}')
+    return ann, history
+
+
+def fit_adam(Xtrain, Xtest, Ytrain, Ytest, W0, b0, n_epochs, n_batches, learning_rate, beta1, beta2, reg,
+                     calc_history_step=None, logging_step=None):
+    print('Train parameters of ANN with minibatch gradient descent with nesterov momentum ...')
+    print(f'fit_gd - W0.mean()={W0[0].mean()}, W0.std()={W0[0].std()}')
+    print(f'fit_gd - b0.mean()={b0[0].mean()}, b0.std()={b0[0].std()}')
+    print(f'fit_gd - W1.mean()={W0[1].mean()}, W0.std()={W0[1].std()}')
+    print(f'fit_gd - b1.mean()={b0[1].mean()}, b0.std()={b0[1].std()}')
+    n_samples = np.ceil(Xtrain.shape[0] / n_batches).astype(int)
+
+    history = []
+    iter_count = 0
+    ann = ANNfit_by_adam(W0, b0)
+    for epoch in range(n_epochs):
+        Xtrain_shuffled, Ytrain_shuffled = shuffle(Xtrain, Ytrain)
+        for batch in range(n_batches):
+            if logging_step is not None and (iter_count % logging_step) == 0:
+                print(f'----------epoch {epoch} - batch {batch}----------')
+            idx_from = batch * n_samples
+            idx_to = (batch + 1) * n_samples
+            Xbatch, Ybatch = Xtrain_shuffled[idx_from:idx_to], Ytrain_shuffled[idx_from:idx_to]
+            t = iter_count + 1
+            ann.fit_step(Xbatch, Ybatch, t=t, learning_rate=learning_rate, beta1=beta1, beta2=beta2, reg=reg)
+
+            if (iter_count % calc_history_step) == 0:
+                history.append(_calc_history(iter_count, Xbatch, Xtest, Ybatch, Ytest, ann))
+            iter_count += 1
+    history = pd.DataFrame(history, columns=['t', 'loss_train', 'loss_test', 'acc_train', 'acc_test'])
+    print(f'fit_minibatch_gd numer of steps: {iter_count}')
+    return ann, history
+
+
 if __name__ == '__main__':
     Xtrain, Xtest, Ytrain, Ytest, picture_shape = get_mnist_normalized_data(train_size=-1000,
                                                                             should_plot_examples=False)
@@ -435,7 +583,21 @@ if __name__ == '__main__':
                                                      learning_rate=0.001, decay_rate=0.999, reg=regularization,
                                                      calc_history_step=report_step, logging_step=report_step)
     histories.append(rms_fit_history)
-    titles.append('RMSProp')
+    titles.append('RMSProp (Root Mean Square)')
+
+    rmsm_model, rmsm_fit_history = fit_rmsprop_with_momentum(Xtrain, Xtest, Ytrain, Ytest, [W0, W1], [b0, b1],
+                                                     n_epochs=n_epochs, n_batches=n_batches,
+                                                     learning_rate=0.001, decay_rate=0.999, mu=0.9, reg=regularization,
+                                                     calc_history_step=report_step, logging_step=report_step)
+    histories.append(rmsm_fit_history)
+    titles.append('RMSProp (Root Mean Square) with momentum')
+
+    adam_model, adam_fit_history = fit_adam(Xtrain, Xtest, Ytrain, Ytest, [W0, W1], [b0, b1],
+                                                     n_epochs=n_epochs, n_batches=n_batches,
+                                                     learning_rate=0.001, beta1=0.9, beta2=0.999, reg=regularization,
+                                                     calc_history_step=report_step, logging_step=report_step)
+    histories.append(adam_fit_history)
+    titles.append('ADAM (Adaptive Moment Estimation)')
 
     cols = ['loss_train', 'loss_test', 'acc_train', 'acc_test']
     report_histories(histories, titles, columns_to_report=cols, columns_to_plot=cols)
