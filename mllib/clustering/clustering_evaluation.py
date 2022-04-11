@@ -1,6 +1,9 @@
 import numpy as np
 
 
+norm_vec = np.vectorize(lambda x: x.dot(x), signature='(d)->()')
+
+
 # purity clustering measure
 def purity_cost(y, clusters):
     n_clusters = len(set(y))
@@ -40,7 +43,7 @@ def calc_purity_soft_hist(y, weights_hist):
 
 # davis-bouldin index clustering measure
 
-def davis_bouldin_index_cost(x, clusters, cluster_centres, dist_calc_func):
+def davis_bouldin_index_cost(x, clusters, cluster_centres, dist_calc_func=norm_vec):
     K = len(cluster_centres)
     sigma = np.zeros(K)
     for k in range(K):
@@ -58,7 +61,7 @@ def davis_bouldin_index_cost(x, clusters, cluster_centres, dist_calc_func):
     return np.mean(clusters_divergence)
 
 
-def davis_bouldin_index_soft_cost(x, weights, cluster_centres, dist_calc_func):
+def davis_bouldin_index_soft_cost(x, weights, cluster_centres, dist_calc_func=norm_vec):
     K = len(cluster_centres)
     sigma = np.zeros(K)
     for k in range(K):
@@ -76,14 +79,14 @@ def davis_bouldin_index_soft_cost(x, weights, cluster_centres, dist_calc_func):
     return np.mean(clusters_divergence)
 
 
-def calc_davis_bouldin_index_hist(x, clusters_hist, centres_hist, dist_calc_func):
+def calc_davis_bouldin_index_hist(x, clusters_hist, centres_hist, dist_calc_func=norm_vec):
     index_hist = []
     for i in range(len(clusters_hist)):
         index_hist.append(davis_bouldin_index_cost(x, clusters_hist[i], centres_hist[i], dist_calc_func))
     return index_hist
 
 
-def calc_davis_bouldin_index_soft_hist(x, weights_hist, centres_hist, dist_calc_func):
+def calc_davis_bouldin_index_soft_hist(x, weights_hist, centres_hist, dist_calc_func=norm_vec):
     index_hist = []
     for i in range(len(weights_hist)):
         index_hist.append(davis_bouldin_index_soft_cost(x, weights_hist[i], centres_hist[i], dist_calc_func))

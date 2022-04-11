@@ -370,3 +370,24 @@ def plot_examples(x, y, cmap='gray', labels=None):
         else:
             plt.xlabel(labels[y[i]])
     plt.show()
+
+
+def get_book_titles_data():
+    titles = []
+    stop_words = []
+
+    with open(get_data_dir('all_book_titles.txt')) as file:
+        for line in file:
+            title = line.rstrip()
+            title = title.encode('ascii', 'ignore')  # this will throw exception if bad characters
+            title = title.decode('utf-8')
+            titles.append(title)
+
+    with open(get_data_dir('stopwords.txt')) as file:
+        for line in file:
+            sw = line.rstrip()
+            sw = sw.encode('ascii', 'ignore')
+            sw = sw.decode('utf-8')
+            stop_words.append(sw)
+
+    return titles, set(stop_words)
