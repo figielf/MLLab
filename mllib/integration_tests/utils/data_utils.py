@@ -1,4 +1,5 @@
 import os
+import string
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -391,3 +392,51 @@ def get_book_titles_data():
             stop_words.append(sw)
 
     return titles, set(stop_words)
+
+
+def get_edgar_allan_poe_data():
+    poem_lines = []
+    with open(get_data_dir('edgar_allan_poe.txt')) as file:
+        for line in file:
+            txt = line.rstrip().lower()
+            if txt:
+                txt = txt.translate(str.maketrans('', '', string.punctuation))
+                poem_lines.append(txt)
+    return poem_lines
+
+
+def get_robert_frost_data():
+    poem_lines = []
+    with open(get_data_dir('robert_frost.txt')) as file:
+        for line in file:
+            txt = line.rstrip().lower()
+            if txt:
+                txt = txt.translate(str.maketrans('', '', string.punctuation))
+                poem_lines.append(txt)
+    return poem_lines
+
+
+def get_edgar_allan_and_robert_frost_data(test_size=0.2):
+    poem_lines = []
+    for txt in get_edgar_allan_poe_data():
+        poem_lines.append((txt, 0))
+    for txt in get_robert_frost_data():
+        poem_lines.append((txt, 1))
+
+    txt_df = pd.DataFrame(poem_lines, columns=['txt', 'author'])
+    if test_size > 0.0:
+        X_train, X_test, Y_train, Y_test = train_test_split(txt_df['txt'].values, txt_df['author'].values,
+                                                            test_size=test_size, random_state=RANDOM_STATE)
+    else:
+        X_train, X_test, Y_train, Y_test = txt_df['txt'].values, None, txt_df['author'].values, None
+
+    return X_train, X_test, Y_train, Y_test
+
+
+def get_coin_flip_data():
+    X = []
+    for line in open(get_data_dir('coin_data.txt')):
+        # 1 for H, 0 for T
+        x = [1 if e == 'H' else 0 for e in line.rstrip()]
+        X.append(x)
+    return X
