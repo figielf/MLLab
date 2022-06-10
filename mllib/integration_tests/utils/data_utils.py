@@ -1,5 +1,7 @@
 import os
 import string
+import wave
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -440,3 +442,18 @@ def get_coin_flip_data():
         x = [1 if e == 'H' else 0 for e in line.rstrip()]
         X.append(x)
     return X
+
+
+def get_helloworld_data():
+    spf = wave.open(get_data_dir('helloworld.wav'), 'r')
+    # Extract Raw Audio from Wav File
+    # If you right-click on the file and go to "Get Info", you can see:
+    # sampling rate = 16000 Hz
+    # bits per sample = 16
+    # The first is quantization in time
+    # The second is quantization in amplitude
+    # We also do this for images!
+    # 2^16 = 65536 is how many different sound levels we have
+    signal = spf.readframes(-1)
+    signal = np.fromstring(signal, 'int16')
+    return signal
