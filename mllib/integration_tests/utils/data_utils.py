@@ -219,7 +219,7 @@ def get_mnist_data(train_size=0.8, should_plot_examples=True):
     X = np.divide(X, 255.0)  # data is from 0..255
 
     if 0.0 < train_size < 1.0:
-        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=1-train_size, random_state=RANDOM_STATE)
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=1 - train_size, random_state=RANDOM_STATE)
     elif train_size == 1:
         X_train, Y_train = shuffle(X, Y, random_state=RANDOM_STATE)
         X_test, Y_test = None, None
@@ -241,7 +241,7 @@ def get_mnist_normalized_data(train_size=0.8, should_plot_examples=True):
     X, Y, picture_shape = _get_mnist_data_raw()
 
     if 0.0 < train_size < 1.0:
-        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=1-train_size, random_state=RANDOM_STATE)
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=1 - train_size, random_state=RANDOM_STATE)
     elif train_size == 1:
         X_train, Y_train = shuffle(X, Y, random_state=RANDOM_STATE)
         X_test, Y_test = None, None
@@ -313,6 +313,40 @@ def get_donut_data(N=200, should_plot_data=True):
     X = np.concatenate([X_inner, X_outer])
     Y = np.array([0] * (N // 2) + [1] * (N // 2))
 
+    X, Y = shuffle_pairs(X, Y)
+
+    if should_plot_data:
+        plt.figure(figsize=(10, 10))
+        plt.scatter(X[:, 0], X[:, 1], c=Y, s=100, alpha=0.5)
+        plt.title('Training data plot')
+        plt.show()
+    return X, Y
+
+
+def get_cloud_3d_data(samples_per_cloud=100, should_plot_data=True):
+    # define the centers of each Gaussian cloud
+    centers = np.array([
+        [1, 1, 1],
+        [1, 1, -1],
+        [1, -1, 1],
+        [1, -1, -1],
+        [-1, 1, 1],
+        [-1, 1, -1],
+        [-1, -1, 1],
+        [-1, -1, -1],
+    ]) * 3
+
+    # create the clouds, Gaussian samples centered at
+    # each of the centers we just made
+    X = []
+    for c in centers:
+        cloud = np.random.randn(samples_per_cloud, 3) + c
+        X.append(cloud)
+    X = np.concatenate(X)
+
+    # visualize the clouds in 3-D
+    # add colors / labels so we can track where the points go
+    Y = np.array([[i] * samples_per_cloud for i in range(len(centers))]).flatten()
     X, Y = shuffle_pairs(X, Y)
 
     if should_plot_data:
