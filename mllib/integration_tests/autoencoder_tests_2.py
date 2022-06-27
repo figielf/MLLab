@@ -2,6 +2,8 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
+from deep_autoencoder import deep_autoencoder
+
 if tf.__version__.startswith('2'):
     tf.compat.v1.disable_eager_execution()
 
@@ -16,10 +18,10 @@ if __name__ == '__main__':
     Xtest, Ytest = Xtrain[-test_size:], Ytrain[-test_size:]
 
     _, D = Xtest.shape
-    autoencoder = autoencoder(D, 300, id=0)
+    autoencoder = deep_autoencoder([500, 300, 2])
     with tf.compat.v1.Session() as session:
         autoencoder.set_session(session)
-        history = autoencoder.fit(Xtrain)
+        history = autoencoder.fit(Xtrain, n_epochs=30)
         plt.plot(history)
         plt.show()
 

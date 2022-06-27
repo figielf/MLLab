@@ -27,6 +27,10 @@ def purity_soft_cost(y, weights):
     return np.sum(clusters_purity) / len(y)
 
 
+def purity(y, weights):  # just rename for convenience
+    return purity_soft_cost(y, weights)
+
+
 def calc_purity_hist(y, clusters_hist):
     purity_hist = []
     for c in clusters_hist:

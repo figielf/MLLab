@@ -1,17 +1,20 @@
 import numpy as np
 import tensorflow as tf
 
+if tf.__version__.startswith('2'):
+    tf.compat.v1.disable_eager_execution()
+
 
 def invoke_simple_function():
     # create static variable placeholders, shape and name are optional
-    A = tf.placeholder(tf.float32, shape=(5, 5), name='A')
-    v = tf.placeholder(tf.float32)
+    A = tf.compat.v1.placeholder(tf.float32, shape=(5, 5), name='A')
+    v = tf.compat.v1.placeholder(tf.float32)
 
     # define computation expression, no calculation will happen here
     w = tf.matmul(A, v)
 
     # create session to reserve memory for variables on graph execution
-    with tf.Session() as session:
+    with tf.compat.v1.Session() as session:
         # execute graph with defined calculations by passing paras in feed_dict
         # v needs to be of shape=(5, 1) not just shape=(5,)
         output = session.run(w, feed_dict={A: np.random.randn(5, 5), v: np.random.randn(5, 1)})
@@ -25,14 +28,14 @@ def find_minimum_of_simple_function():
 
     # create variables that will contain data that will be updated during graph execution
     # a tf variable can be initialized with anything that can be turned into a tf tensor (eg. numpy array or a tf array)
-    x = tf.Variable(tf.random_normal(shape))
+    x = tf.Variable(tf.random.normal(shape))
     # x = tf.Variable(np.random.randn(2, 2))
     t = tf.Variable(0)
 
     # define variable initialization operation
-    init = tf.global_variables_initializer()
+    init = tf.compat.v1.global_variables_initializer()
 
-    with tf.Session() as session:
+    with tf.compat.v1.Session() as session:
         # variables has to be initialized (instantiated)
         # execute variable initialization operation
         out = session.run(init)
@@ -47,11 +50,11 @@ def find_minimum_of_simple_function():
     cost = u*u + u + 1.0
 
     # define computation graph by setting optimizer with learning rate of 0.3 which minimizes 'cost' function
-    train_op = tf.train.GradientDescentOptimizer(0.3).minimize(cost)
+    train_op = tf.compat.v1.train.GradientDescentOptimizer(0.3).minimize(cost)
 
     # run a session
-    init = tf.global_variables_initializer()
-    with tf.Session() as session:
+    init = tf.compat.v1.global_variables_initializer()
+    with tf.compat.v1.Session() as session:
         session.run(init)
 
         # Strangely, while the weight update is automated, the loop itself is not.
