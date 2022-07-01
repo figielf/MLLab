@@ -44,5 +44,5 @@ if __name__ == '__main__':
     # try NB by itself
     model1 = gaussian_bn_with_pca_classifier(n_classes=K, n_components=50)
     model1.fit(X_train, Y_train)
-    print("gaussian_bn_with_pca_classifier - NB train score:", model1.score(X_train, Y_train))
-    print("gaussian_bn_with_pca_classifier - NB test score:", model1.score(X_test, Y_test))
+    print("gaussian_nb_with_pca_classifier - NB train score:", model1.score(X_train, Y_train))
+    print("gaussian_nb_with_pca_classifier - NB test score:", model1.score(X_test, Y_test))

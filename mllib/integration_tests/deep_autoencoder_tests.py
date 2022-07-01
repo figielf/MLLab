@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from sklearn.mixture import GaussianMixture
@@ -27,7 +28,7 @@ if __name__ == '__main__':
         plt.title('train history')
 
         mapping = autoencoder.map2center(Xtrain.copy())
-        print(mapping)
+        print(np.array(mapping).shape)
 
         plt.subplot(2, 1, 2)
         plt.scatter(mapping[:, 0], mapping[:, 1], c=Ytrain, s=100, alpha=0.5)
