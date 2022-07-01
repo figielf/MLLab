@@ -4,7 +4,7 @@ from sklearn.manifold import TSNE
 from sklearn.mixture import GaussianMixture
 
 from clustering.clustering_evaluation import purity_soft_cost
-from integration_tests.utils.data_utils import get_xor_data, get_donut_data, get_cloud_3d_data, get_mnist_data
+from tests.utils.data_utils import get_xor_data, get_donut_data, get_cloud_3d_data, get_mnist_data
 
 
 def tsne_on_xor_2d():

@@ -4,7 +4,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from random_forest_estimator import RandomForestRegressor
 from model_selection import my_cross_val_score
-from integration_tests.utils.data_utils import get_mushroom_data
+from tests.utils.data_utils import get_mushroom_data
 
 
 if __name__ == '__main__':

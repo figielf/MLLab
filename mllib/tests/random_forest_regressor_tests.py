@@ -3,7 +3,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from random_forest_estimator import RandomForestRegressor
 from model_selection import my_cross_val_score
-from integration_tests.utils.data_utils import get_housing_data
+from tests.utils.data_utils import get_housing_data
 
 
 if __name__ == '__main__':

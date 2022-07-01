@@ -3,8 +3,8 @@ from matplotlib import pyplot as plt
 
 from clustering.clustering_evaluation import calc_purity_soft_hist, calc_davis_bouldin_index_soft_hist
 from clustering.kmeans_soft import Kmeans_soft
-from integration_tests.utils.data_utils import get_mnist_data
-from integration_tests.utils.plot_utils import plot_clusters, plot_clusters_by_weights, plot_clusters_by_weights_history
+from tests.utils.data_utils import get_mnist_data
+from tests.utils.plot_utils import plot_clusters, plot_clusters_by_weights, plot_clusters_by_weights_history
 
 
 def get_cloud_data(K, N, D):

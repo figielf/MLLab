@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.metrics import confusion_matrix, f1_score
 
-from integration_tests.utils.data_utils import get_edgar_allan_and_robert_frost_data
+from tests.utils.data_utils import get_edgar_allan_and_robert_frost_data
 from markov_models.mm_1order import MAPClassifier, SimpleMarkovModel
 
 

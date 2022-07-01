@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from integration_tests.utils.data_utils import get_helloworld_data
+from tests.utils.data_utils import get_helloworld_data
 from markov_models.hmm_continous_theano import hmm_continous_theano
 
 

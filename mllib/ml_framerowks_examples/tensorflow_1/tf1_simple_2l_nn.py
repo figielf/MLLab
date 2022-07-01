@@ -3,7 +3,7 @@ import tensorflow as tf1
 import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
 
-from integration_tests.utils.data_utils import get_mnist_normalized_data
+from tests.utils.data_utils import get_mnist_normalized_data
 from utils_ndarray import ndarray_one_hot_encode
 
 

@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 
 from clustering.clustering_evaluation import calc_purity_hist, calc_davis_bouldin_index_hist
 from clustering.kmeans_hard import Kmeans_hard
-from integration_tests.utils.plot_utils import plot_clusters, plot_clusters_history
+from tests.utils.plot_utils import plot_clusters, plot_clusters_history
 
 
 def get_cloud_data(K, N, D):

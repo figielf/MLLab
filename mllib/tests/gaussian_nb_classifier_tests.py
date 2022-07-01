@@ -3,7 +3,7 @@ from sklearn.decomposition import PCA
 from dimensionality_reduction.pca import pca
 from gaussian_bn_with_pca_classifier import gaussian_bn_with_pca_classifier
 from gaussian_nb_classifier import gaussian_nb_classifier
-from integration_tests.utils.data_utils import get_mnist_data
+from tests.utils.data_utils import get_mnist_data
 
 
 def test_nb_model(Xtrain, Ytrain, Xtest, Ytest, model_factory, info):

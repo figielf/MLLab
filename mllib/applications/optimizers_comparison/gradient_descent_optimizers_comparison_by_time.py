@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from sklearn.utils import shuffle
 
 from activations import softmax, sigmoid
-from integration_tests.utils.data_utils import get_mnist_normalized_data
+from tests.utils.data_utils import get_mnist_normalized_data
 from scores import accuracy, multiclass_cross_entropy
 from utils_ndarray import ndarray_one_hot_encode, one_hot_2_vec
 

@@ -1,15 +1,15 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
+from autoencoder import autoencoder
 from dnn_estimator import dnn
-from integration_tests.utils.data_utils import get_mnist_data
-from rbm import rbm
+from tests.utils.data_utils import get_mnist_data
 
 if tf.__version__.startswith('2'):
     tf.compat.v1.disable_eager_execution()
 
 def print_history(Xtrain, Ytrain, Xtest, Ytest, _id, plt, pretrain):
-    dnn_model = dnn(D, [1000, 750, 500], K, base_model=rbm)
+    dnn_model = dnn(D, [1000, 750, 500], K, base_model=autoencoder)
     init_op = tf.compat.v1.global_variables_initializer()
     with tf.compat.v1.Session() as session:
         session.run(init_op)

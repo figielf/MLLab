@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from integration_tests.utils.data_utils import get_simple_xor_data, get_donut_data
+from tests.utils.data_utils import get_simple_xor_data, get_donut_data
 from natural_networks.nn_activations import SigmoidActivation, SoftmaxActivation, TanhActivation, ReLUActivation
 from natural_networks.nn_layers import DenseLayer
 from natural_networks.nn_sequential_estimator import NNSequentialClassifier

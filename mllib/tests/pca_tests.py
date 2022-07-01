@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 from sklearn.decomposition import PCA
 
 from dimensionality_reduction.pca import pca
-from integration_tests.utils.data_utils import get_mnist_data
+from tests.utils.data_utils import get_mnist_data
 
 
 def reduce_by_sklearn_PCA(X):

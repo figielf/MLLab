@@ -5,7 +5,7 @@ from sklearn.mixture import GaussianMixture
 
 from clustering.clustering_evaluation import purity
 from deep_autoencoder import deep_autoencoder
-from integration_tests.utils.data_utils import get_mnist_data
+from tests.utils.data_utils import get_mnist_data
 
 if tf.__version__.startswith('2'):
     tf.compat.v1.disable_eager_execution()

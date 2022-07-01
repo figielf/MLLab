@@ -6,7 +6,7 @@ if tf.__version__.startswith('2'):
     tf.compat.v1.disable_eager_execution()
 
 from autoencoder import autoencoder
-from integration_tests.utils.data_utils import get_mnist_data
+from tests.utils.data_utils import get_mnist_data
 
 if __name__ == '__main__':
     K = 10

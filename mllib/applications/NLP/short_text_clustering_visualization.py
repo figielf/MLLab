@@ -6,7 +6,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.manifold import TSNE
 
 from clustering.kmeans_soft import Kmeans_soft
-from integration_tests.utils.data_utils import get_book_titles_data
+from tests.utils.data_utils import get_book_titles_data
 
 
 def tokenize(txt, lemitizer):

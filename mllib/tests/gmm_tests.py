@@ -4,8 +4,8 @@ from sklearn.mixture import GaussianMixture
 
 from clustering.clustering_evaluation import purity_soft_cost, davis_bouldin_index_soft_cost
 from clustering.gmm import gmm
-from integration_tests.utils.data_utils import get_mnist_data
-from integration_tests.utils.plot_utils import plot_clusters
+from tests.utils.data_utils import get_mnist_data
+from tests.utils.plot_utils import plot_clusters
 
 
 def get_cloud_data(K, D):

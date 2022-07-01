@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from integration_tests.utils.data_utils import get_coin_flip_data
+from tests.utils.data_utils import get_coin_flip_data
 from markov_models.hmm_discrete import hmm_discrete
 from markov_models.hmm_discrete_theano import hmm_discrete_theano
 

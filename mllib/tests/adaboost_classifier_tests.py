@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
 from adaboost_classifier_estimator import AdaBoostClassifier
-from integration_tests.utils.data_utils import get_mushroom_data
+from tests.utils.data_utils import get_mushroom_data
 
 
 if __name__ == '__main__':

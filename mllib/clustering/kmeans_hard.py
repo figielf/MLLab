@@ -1,7 +1,7 @@
 import numpy as np
 
 from clustering.clustering_evaluation import purity_cost, davis_bouldin_index_cost
-from integration_tests.utils.data_utils import RANDOM_STATE
+from tests.utils.data_utils import RANDOM_STATE
 
 norm_vec = np.vectorize(lambda x: x.dot(x), signature='(d)->()')
 
