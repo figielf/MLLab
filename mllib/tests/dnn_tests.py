@@ -43,4 +43,3 @@ if __name__ == '__main__':
     print_history(Xtrain.copy(), Ytrain.copy(), Xtest.copy(), Ytest.copy(), 0, plt, pretrain=True)
     print_history(Xtrain.copy(), Ytrain.copy(), Xtest.copy(), Ytest.copy(), 1, plt, pretrain=False)
     plt.show()
-

@@ -97,8 +97,9 @@ class dnn:
                 test_error = self._error_rate(test_pred, Ytest)
                 if j % 100 == 0:
                     print(
-                       f'supervised dnn, epoch:{i}, batch:{j} - train cost:{train_cost}, test cost:{test_cost}, train error:{train_error}, test_error: {test_error}')
+                        f'supervised dnn, epoch:{i}, batch:{j} - train cost:{train_cost}, test cost:{test_cost}, train error:{train_error}, test_error: {test_error}')
                 history.append([train_cost, test_cost, train_error, test_error])
+
         return np.array(history)
 
     def forward_logits(self, x):

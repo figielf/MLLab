@@ -70,16 +70,16 @@ def annotate1(X, index_word_map, eps=0.1):
 
     placed[i] = (x, y)
 
-    plt.annotate(
-      #s=index_word_map[i],
-      text=index_word_map[i],
-      xy=(X[i,0], X[i,1]),
-      xytext=(x, y),
-      arrowprops={
-        'arrowstyle' : '->',
-        'color' : 'black',
-      }
-    )
+    #plt.annotate(
+    #  s=index_word_map[i],
+    #  text=index_word_map[i],
+    #  xy=(X[i,0], X[i,1]),
+    #  xytext=(x, y),
+    #  arrowprops={
+    #    'arrowstyle': '->',
+    #    'color': 'black',
+    #  }
+    #)
 
 
 def plot_clusters(X, K, R, index2word):

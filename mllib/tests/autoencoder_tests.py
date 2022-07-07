@@ -8,6 +8,22 @@ if tf.__version__.startswith('2'):
 from autoencoder import autoencoder
 from tests.utils.data_utils import get_mnist_data
 
+
+def plot_what_nodes_has_learned(W, input_shape, n=5, print_misclassified=False, labels=None):
+    D, M = W.shape
+    assert input_shape[0] * input_shape[1] == D
+
+    # get random nodes
+    nodes = np.random.choice(M, size=n*n, replace=False)
+
+    plt.figure(figsize=(15, 15))
+    for i, node in enumerate(nodes):
+        plt.subplot(n, n, i + 1)
+        imgplot = plt.imshow(W[:, node].reshape(input_shape), cmap='gray')
+        plt.title(f'node {node}')
+    plt.show()
+
+
 if __name__ == '__main__':
     K = 10
     test_size = 1000
@@ -20,6 +36,9 @@ if __name__ == '__main__':
     with tf.compat.v1.Session() as session:
         autoencoder.set_session(session)
         history = autoencoder.fit(Xtrain)
+
+        W = autoencoder.W.eval()
+
         plt.plot(history)
         plt.show()
 
@@ -37,3 +56,6 @@ if __name__ == '__main__':
             plt.imshow(y.reshape(picture_shape), cmap='gray')
             plt.title('Reconstructed')
         plt.show()
+
+    plot_what_nodes_has_learned(W, input_shape=picture_shape)
+
