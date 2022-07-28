@@ -50,6 +50,16 @@ def multiclass_cross_entropy(target, p_hat):
     return -log_p.mean()
 
 
+def sparse_multiclass_cross_entropy(target, p_hat):
+    # target = [1, 2]
+    # p_hat = [[0.04, 0.95, 0.01], [0.1, 0.8, 0.1]]
+    # returns [-0.05129329, -2.30258509]
+    assert isinstance(p_hat, np.ndarray)
+    assert len(target) == p_hat.shape[0]
+    log_p = np.log(p_hat[np.arange(p_hat.shape[0]), target])
+    return -log_p.mean()
+
+
 def r2(y, y_hat):
     assert isinstance(y, np.ndarray)
     assert isinstance(y_hat, np.ndarray)
