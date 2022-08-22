@@ -52,7 +52,7 @@ class word2vec:
                     target = 0
                     c = self._sgd(neg_centre, context, target, lr)
                     cumulative_cost += c
-                    cost_sample_count += 2 * len(context)
+                    cost_sample_count += len(context)
 
             cost = cumulative_cost / cost_sample_count
             print(f'epoch {epoch} - loss: {cost}')

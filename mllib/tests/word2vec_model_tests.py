@@ -106,7 +106,7 @@ def build_model(data='wiki', n_vocab=20000, with_tensorflow=False):
     if data == 'wiki':
         sequences, word2idx, _ = get_sequences_with_word2idx_from_wiki_corpus(n_vocab=n_vocab)
     elif data == 'brown':
-        sequences, word2idx, _ = get_sequences_with_word2idx_from_brown_corpus(n_vocab=n_vocab, include_start_end=False,
+        sequences, word2idx, _ = get_sequences_with_word2idx_from_brown_corpus(n_vocab=n_vocab, include_start_end_in_vocab=False,
                                                                                keep_words=None)
     else:
         raise Exception('Only wiki or brown corpus is supported')

@@ -40,11 +40,11 @@ def idx_sqe2sentence(idx_seq, idx2word, separator=' '):
     return separator.join([idx2word[idx] for idx in idx_seq])
 
 
-def get_sequences_with_word2idx_from_brown_corpus(n_vocab=2000, include_start_end=True, keep_words=
+def get_sequences_with_word2idx_from_brown_corpus(n_vocab=2000, include_start_end_in_vocab=True, keep_words=
 {'king', 'man', 'queen', 'woman', 'italy', 'rome', 'france', 'paris', 'london', 'britain', 'england'}):
     sentences = brown.sents()
 
-    if include_start_end:
+    if include_start_end_in_vocab:
         word2idx = {START_STR: 0, END_STR: 1}
         idx2word = [START_STR, END_STR]
         i = 2
@@ -96,7 +96,7 @@ def get_sequences_with_word2idx_from_brown_corpus(n_vocab=2000, include_start_en
     word2idx_small[UNKNOWN_STR] = new_idx
     unknown = new_idx
 
-    if include_start_end:
+    if include_start_end_in_vocab:
         assert (START_STR in word2idx_small)
         assert (END_STR in word2idx_small)
     if keep_words is not None:
