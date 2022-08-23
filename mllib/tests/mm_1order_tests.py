@@ -45,10 +45,10 @@ if __name__ == '__main__':
     print(f'train accuracy: {(pred_train == y_train).mean()}')
     print(f'train F1 score: {f1_score(y_train, pred_train)}')
     print('train confusion matrix:')
-    confusion_matrix(y_train, pred_train)
+    print(confusion_matrix(y_train, pred_train))
 
     pred_test = mm.predict(X_test_vectorized)
     print(f'test accuracy: {(pred_test == y_test).mean()}')
     print(f'test F1 score: {f1_score(y_test, pred_test)}')
     print('test confusion matrix:')
-    confusion_matrix(y_test, pred_test)
+    print(confusion_matrix(y_test, pred_test))

@@ -78,7 +78,6 @@ class glove:
         ).minimize(regularized_cost)
 
         with tf.compat.v1.Session() as session:
-            session = tf.compat.v1.Session()
             init_op = tf.compat.v1.global_variables_initializer()
             session.run(init_op)
 

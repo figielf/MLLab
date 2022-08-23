@@ -52,7 +52,6 @@ class word2vec_tf:
         train_op = tf.compat.v1.train.MomentumOptimizer(0.1, momentum=0.9).minimize(loss)
         # train_op = tf.train.AdamOptimizer(1e-2).minimize(loss)
         with tf.compat.v1.Session() as session:
-            session = tf.compat.v1.Session()
             init_op = tf.compat.v1.global_variables_initializer()
             session.run(init_op)
 

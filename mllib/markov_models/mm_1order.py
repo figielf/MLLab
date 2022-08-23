@@ -15,9 +15,11 @@ class SimpleMarkovModel(IDiscreteProbabilityModel):
         self.log_pi = None
         self.log_A = None
 
-    def fit(self, x):
-        pi_count = np.ones(self.n_states)  # t_0 probability distirubtion of initial state of s
-        A_count = np.ones((self.n_states, self.n_states))  # A[i, j] - prob of transition from state s[i] to state s[j]
+    def fit(self, x, smoothing=10e-2):
+        if smoothing is None:
+            smoothing = 1
+        pi_count = np.ones(self.n_states) * smoothing  # t_0 probability distirubtion of initial state of s
+        A_count = np.ones((self.n_states, self.n_states)) * smoothing  # A[i, j] - prob of transition from state s[i] to state s[j]
         for idx, x_cur in enumerate(x):
             pi_count[x_cur[0]] += 1
             for t in range(1, len(x_cur)):
