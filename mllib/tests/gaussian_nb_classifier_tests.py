@@ -1,7 +1,7 @@
 from sklearn.decomposition import PCA
 
 from dimensionality_reduction.pca import pca
-from gaussian_bn_with_pca_classifier import gaussian_bn_with_pca_classifier
+from gaussian_nb_with_pca_classifier import gaussian_nb_with_pca_classifier
 from gaussian_nb_classifier import gaussian_nb_classifier
 from tests.utils.data_utils import get_mnist_data
 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     test_nb_model(X_train, Y_train, X_test, Y_test, lambda: gaussian_nb_classifier(K), 'gaussian_nb_classifier')
 
     # try NB by itself
-    model1 = gaussian_bn_with_pca_classifier(n_classes=K, n_components=50)
+    model1 = gaussian_nb_with_pca_classifier(n_classes=K, n_components=50)
     model1.fit(X_train, Y_train)
     print("gaussian_nb_with_pca_classifier - NB train score:", model1.score(X_train, Y_train))
     print("gaussian_nb_with_pca_classifier - NB test score:", model1.score(X_test, Y_test))

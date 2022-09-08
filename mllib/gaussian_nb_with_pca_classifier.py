@@ -4,7 +4,7 @@ from dimensionality_reduction.pca import pca
 from gaussian_nb_classifier import gaussian_nb_classifier
 
 
-class gaussian_bn_with_pca_classifier:
+class gaussian_nb_with_pca_classifier:
     def __init__(self, n_classes, n_components=None):
         self.nb_classifier = gaussian_nb_classifier(n_classes=n_classes)
         self.pca_model = pca(n_components=n_components)
