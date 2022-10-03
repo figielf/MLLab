@@ -2,12 +2,11 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-from deep_autoencoder import deep_autoencoder
+from autoencoders.deep_autoencoder import deep_autoencoder
 
 if tf.__version__.startswith('2'):
     tf.compat.v1.disable_eager_execution()
 
-from autoencoder import autoencoder
 from tests.utils.data_utils import get_mnist_data
 
 if __name__ == '__main__':

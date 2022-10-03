@@ -2,7 +2,7 @@ import numpy as np
 import sklearn.ensemble
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
-from random_forest_estimator import RandomForestRegressor
+from ensamble.random_forest_estimator import RandomForestRegressor
 from model_selection import my_cross_val_score
 from tests.utils.data_utils import get_mushroom_data
 

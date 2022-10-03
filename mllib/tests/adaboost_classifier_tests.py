@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
-from adaboost_classifier_estimator import AdaBoostClassifier
+from ensamble.adaboost_classifier_estimator import AdaBoostClassifier
 from tests.utils.data_utils import get_mushroom_data
 
 
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     for num_trees in range(0, T + 1, T_step):
         if num_trees == 0:
             continue
-        print('number of trees:', num_trees)
+        print('number of ensamble:', num_trees)
 
         model = AdaBoostClassifier(lambda: DecisionTreeClassifier(max_depth=1), n_steps=num_trees)
         model.fit(X_train, Y_train)

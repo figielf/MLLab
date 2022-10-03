@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
-from decision_tree_estimator import BinaryTreeClassifier
+from trees.decision_tree_estimator import BinaryTreeClassifier
 from tests.utils.data_utils import get_mnist_data, get_xor_data, get_donut_data
 
 

@@ -1,5 +1,5 @@
 import numpy as np
-from decision_tree_estimator import BinaryTreeNode, BinaryTreeBase
+from trees.decision_tree_estimator import BinaryTreeNode, BinaryTreeBase
 from bagging_estimator import BaggingRegressor, BaggingClassifier
 from scores import binary_entropy
 

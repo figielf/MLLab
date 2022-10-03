@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from tests.utils.data_utils import get_mnist_data
-from variational_autoencoder import variational_autoencoder_for_binary_variable
+from autoencoders.variational_autoencoder import variational_autoencoder_for_binary_variable
 
 
 def plot_generated_samples(vae_model, X, Y):

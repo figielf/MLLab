@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from multiclass_logistic_regression_estimator import MulticlassLogisticRegression
+from logistic_models.multiclass_logistic_regression_estimator import MulticlassLogisticRegression
 from utils_ndarray import ndarray_one_hot_encode
 
 

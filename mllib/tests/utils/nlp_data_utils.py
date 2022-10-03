@@ -316,7 +316,7 @@ def get_trees_data_with_word2idx_from_ptb():
             t = Tree(word2idx[word], label)
             return t, current_idx
 
-    data_folder = os.path.join(get_data_dir('sentiment_trees'), 'trees')
+    data_folder = os.path.join(get_data_dir('sentiment_trees'), 'ensamble')
     train_data_path = os.path.join(data_folder, 'train.txt')
     test_data_path = os.path.join(data_folder, 'test.txt')
     dev_data_path = os.path.join(data_folder, 'dev.txt')

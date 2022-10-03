@@ -1,8 +1,8 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-from autoencoder import autoencoder
-from dnn_estimator import dnn
+from autoencoders.autoencoder import autoencoder
+from natural_networks.dnn_estimator import dnn
 from tests.utils.data_utils import get_mnist_data
 
 if tf.__version__.startswith('2'):

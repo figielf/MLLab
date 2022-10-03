@@ -1,7 +1,7 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-from dnn_estimator import dnn
+from natural_networks.dnn_estimator import dnn
 from tests.utils.data_utils import get_mnist_data
 from rbm import rbm
 

@@ -10,7 +10,7 @@ if tf.__version__.startswith('2'):
 
 class rntn:
     """
-    recursive neural network classifier based on binary trees with buildin embedding layer
+    recursive neural network classifier based on binary ensamble with buildin embedding layer
     tree has to be instance of tests.utils.nlp_data_utils.Tree
     """
 
@@ -217,18 +217,18 @@ class rntn:
     #         }
     #     )
     #
-    # def score(self, trees):
-    #     n_total = len(trees)
+    # def score(self, ensamble):
+    #     n_total = len(ensamble)
     #     n_correct = 0
-    #     for words, left, right, lab in trees:
+    #     for words, left, right, lab in ensamble:
     #         p = self.predict(words, left, right, lab)
     #         n_correct += (p[-1] == lab[-1])
     #     return float(n_correct) / n_total
     #
-    # def f1_score(self, trees):
+    # def f1_score(self, ensamble):
     #     Y = []
     #     P = []
-    #     for words, left, right, lab in trees:
+    #     for words, left, right, lab in ensamble:
     #         p = self.predict(words, left, right, lab)
     #         Y.append(lab[-1])
     #         P.append(p[-1])

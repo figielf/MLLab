@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.mixture import GaussianMixture
 
 from clustering.clustering_evaluation import purity
-from deep_autoencoder import deep_autoencoder
+from autoencoders.deep_autoencoder import deep_autoencoder
 from tests.utils.data_utils import get_mnist_data
 
 if tf.__version__.startswith('2'):

@@ -1,8 +1,7 @@
 from matplotlib import pyplot as plt
-from sklearn.mixture import GaussianMixture, BayesianGaussianMixture
-from sklearn.utils import shuffle
+from sklearn.mixture import BayesianGaussianMixture
 
-from bayes_classifier_generic import bayes_classifier
+from bayesian.bayes_classifier_generic import bayes_classifier
 from tests.utils.data_utils import get_mnist_data
 
 if __name__ == '__main__':

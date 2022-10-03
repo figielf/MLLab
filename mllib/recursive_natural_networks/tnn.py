@@ -10,7 +10,7 @@ if tf.__version__.startswith('2'):
 
 class tnn:
     """
-    recursive neural network classifier based on binary trees with buildin embedding layer
+    recursive neural network classifier based on binary ensamble with buildin embedding layer
     tree has to be instance of tests.utils.nlp_data_utils.Tree
     """
 

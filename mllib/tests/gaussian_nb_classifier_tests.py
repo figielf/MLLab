@@ -1,8 +1,8 @@
 from sklearn.decomposition import PCA
 
 from dimensionality_reduction.pca import pca
-from gaussian_nb_with_pca_classifier import gaussian_nb_with_pca_classifier
-from gaussian_nb_classifier import gaussian_nb_classifier
+from bayesian.gaussian_nb_with_pca_classifier import gaussian_nb_with_pca_classifier
+from bayesian.gaussian_nb_classifier import gaussian_nb_classifier
 from tests.utils.data_utils import get_mnist_data
 
 

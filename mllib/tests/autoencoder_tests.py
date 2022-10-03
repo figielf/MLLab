@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 if tf.__version__.startswith('2'):
     tf.compat.v1.disable_eager_execution()
 
-from autoencoder import autoencoder
+from autoencoders.autoencoder import autoencoder
 from tests.utils.data_utils import get_mnist_data
 
 
