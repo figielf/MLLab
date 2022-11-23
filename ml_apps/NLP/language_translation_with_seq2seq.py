@@ -11,13 +11,11 @@ from NLP.nlp_data_utils import get_spanish_english_translations_data
 
 
 def plot_history(history):
-    plt.figure(figsize=(24, 10))
+    plt.figure(figsize=(16, 8))
     plt.subplot(1, 2, 1)
     plt.plot(history['loss'], label='loss')
     plt.plot(history['val_loss'], label='val_loss')
     plt.legend()
-
-    print(history.keys())
 
     # accuracies
     plt.subplot(1, 2, 2)

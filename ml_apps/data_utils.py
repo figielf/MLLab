@@ -30,5 +30,3 @@ def split_by_train_size(X, Y, train_size, random_state=RANDOM_STATE, shuffle_dat
         else:
             X_train, Y_train = shuffle(X_train, Y_train, random_state=RANDOM_STATE)
     return X_train, X_test, Y_train, Y_test
-
-
