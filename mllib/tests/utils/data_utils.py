@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.utils import shuffle
-from future.utils import iteritems
 from tests.consts import TEST_DATA_PATH
 
 RANDOM_STATE = 123
