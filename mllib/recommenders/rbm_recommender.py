@@ -149,6 +149,13 @@ class rbm_recommender:
     def forward_output(self, x):
         return tf.nn.softmax(self.forward_logits(x))
 
+    def predict_proba(self, X):
+        _, D, K = X.shape
+        assert self.D == D
+        assert self.K == K
+        rating_prob_pred = self.forward_output(X)
+        return self._session.run(rating_prob_pred, feed_dict={self._x_input: X})
+
     def predict(self, X):
         _, D, K = X.shape
         assert self.D == D
