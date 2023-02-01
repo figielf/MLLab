@@ -219,3 +219,33 @@ def get_babi_qa_data(challenge_type, n_samples=10000):
            inputs_test, queries_test, answers_test, \
            story_maxsents, story_maxlen, query_maxlen, \
            vocab, vocab_size, word2idx
+
+
+def get_airline_tweets_data(train_size=0.8):
+    # https://www.kaggle.com/crowdflower/twitter-airline-sentiment
+    # https://lazyprogrammer.me/course_files/AirlineTweets.csv
+    print("Reading in and transforming data...")
+    df = pd.read_csv(get_data_dir('AirlineTweets.csv'))
+    df = df[df['airline_sentiment'] != 'neutral']
+    tweets = df['text'].values
+    sentiments = df['airline_sentiment'].values
+    X_train, X_test, Y_train, Y_test = split_by_train_size(tweets, sentiments, train_size=train_size)
+    return X_train, X_test, Y_train, Y_test, df
+
+
+def get_robert_frost_data():
+    lines = []
+    with open(get_data_dir('robert_frost.txt'), encoding='utf-8') as file:
+        for line in file:
+            txt = line.rstrip()
+            if len(line) > 0:
+                lines.append(line)
+    return lines
+
+
+def get_bbc_text_data(train_size=0.8):
+    df = pd.read_csv(get_data_dir('bbc_text_cls.csv'))
+    texts = df['text'].values
+    targets = df['labels'].values
+    X_train, X_test, Y_train, Y_test = split_by_train_size(texts, targets, train_size=train_size)
+    return X_train, X_test, Y_train, Y_test

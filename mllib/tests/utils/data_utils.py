@@ -8,13 +8,17 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.utils import shuffle
-from tests.consts import TEST_DATA_PATH
+from tests.consts import TEST_DATA_PATH, TEST_LARGE_DATA_PATH
 
 RANDOM_STATE = 123
 
 
 def get_data_dir(file_name):
     return os.path.join(TEST_DATA_PATH, file_name)
+
+
+def get_large_data_dir(file_name):
+    return os.path.join(TEST_LARGE_DATA_PATH, file_name)
 
 
 def split_by_train_size(X, Y, train_size, random_state=RANDOM_STATE, shuffle_data=True):

@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+import pandas as pd
 
 from data_utils import get_data_dir
 
