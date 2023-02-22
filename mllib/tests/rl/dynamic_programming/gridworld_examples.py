@@ -74,7 +74,7 @@ def grid_5x5(step_cost=-0.1):
     return gridworld_simple(rows=5, columns=5, start=(4, 0), rewards=rewards, actions=actions)
 
 
-def build_windy_grid():
+def build_windy_grid(quiet=False):
     rewards = {(0, 3): 1, (1, 3): -1}
     actions = {
         (0, 0): ('D', 'R'),
@@ -128,16 +128,16 @@ def build_windy_grid():
         ((1, 2), 'L'): {(1, 2): 1.0},
         ((1, 2), 'R'): {(1, 3): 1.0},
         }
-    return gridworld_windy(rows=3, columns=4, start=(2, 0), rewards=rewards, transition_probs=probs, actions=actions)
+    return gridworld_windy(rows=3, columns=4, start=(2, 0), rewards=rewards, transition_probs=probs, actions=actions, quiet=quiet)
 
 
-def build_windy_grid_no_wind():
-    g = build_windy_grid()
+def build_windy_grid_no_wind(quiet=False):
+    g = build_windy_grid(quiet=quiet)
     g.transition_probs[((1, 2), 'U')] = {(0, 2): 1.0}
     return g
 
 
-def build_windy_grid_penalized(step_cost=-0.1):
+def build_windy_grid_penalized(step_cost=-0.1, quiet=False):
     rewards = {
         (0, 0): step_cost,
         (0, 1): step_cost,
@@ -203,4 +203,4 @@ def build_windy_grid_penalized(step_cost=-0.1):
         ((1, 2), 'L'): {(1, 2): 1.0},
         ((1, 2), 'R'): {(1, 3): 1.0},
         }
-    return gridworld_windy(rows=3, columns=4, start=(2, 0), rewards=rewards, transition_probs=probs, actions=actions)
+    return gridworld_windy(rows=3, columns=4, start=(2, 0), rewards=rewards, transition_probs=probs, actions=actions, quiet=quiet)

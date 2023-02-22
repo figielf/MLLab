@@ -1,5 +1,6 @@
 from rl.dynamic_programming.mdp_deterministic_policy_optimization import optimize_mdp_policy_for_value_function
-from tests.rl.dynamic_programming.gridworld_examples import build_windy_grid
+from tests.rl.dynamic_programming.gridworld_examples import build_windy_grid, build_standart_simple_grid, \
+    build_negative_simple_grid, grid_5x5, build_windy_grid_no_wind, build_windy_grid_penalized
 from tests.rl.dynamic_programming.iterative_policy_evaluation_tests import run_policy_evaluation
 
 if __name__ == '__main__':
@@ -26,11 +27,11 @@ if __name__ == '__main__':
         (2, 3): {'L': 1.0},
     }
 
-    #grid = build_standart_simple_grid()
+    grid = build_standart_simple_grid()
     #grid = build_negative_simple_grid()
     #grid = grid_5x5()
 
-    grid = build_windy_grid()
+    #grid = build_windy_grid()
     #grid = build_windy_grid_no_wind()
     #grid = build_windy_grid_penalized()
 

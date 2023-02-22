@@ -19,7 +19,7 @@ class gridworld_simple(gridworld_base):
     def set_rewards(self, rewards: dict[tuple[int, int], float]):
         self.rewards = rewards
 
-    def all_states(self):
+    def all_states(self) -> set[tuple[int, int]]:
         return set(self.actions.keys()) | set(self.rewards.keys())
 
     def _move_impl(self, state: tuple[int, int], action: str) -> object:

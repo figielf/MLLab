@@ -14,23 +14,25 @@ class gridworld_windy(gridworld_base):
             start: tuple[int, int],
             rewards: dict[tuple[int, int], float] = None,
             transition_probs: dict[tuple[tuple[int, int], str], dict[tuple[int, int], float]] = None,
-            actions: dict[tuple[int, int], list[str]] = None):
+            actions: dict[tuple[int, int], list[str]] = None,
+            quiet=False):
         super().__init__(rows, columns, start, actions)
         self.rewards = rewards  # dict[state, reward]
         self.transition_probs = None
-        self.set_transition_probs(transition_probs)  # dict[tuple[state, action], dict[state, transition_probability]]
+        self.set_transition_probs(transition_probs, quiet=quiet)  # dict[tuple[state, action], dict[state, transition_probability]]
 
     def set_rewards(self, rewards: dict[tuple[int, int], float]):
         self.rewards = rewards
 
-    def set_transition_probs(self, transition_probs: dict[tuple[tuple[int, int], str], dict[tuple[int, int], float]]):
+    def set_transition_probs(self, transition_probs: dict[tuple[tuple[int, int], str], dict[tuple[int, int], float]], quiet=False):
         probs = {}
         for state_action, state_distribution in transition_probs.items():
             state, action = state_action
             if action in self.actions.get(state, []):  # if action is allowed for the state in the game
                 probs[state_action] = state_distribution
             else:
-                print(f'Action {action} is not a allowed for state {state}. Allowed actions are: {self.actions.get(state, [])}')
+                if not quiet:
+                    print(f'Action {action} is not a allowed for state {state}. Allowed actions are: {self.actions.get(state, [])}')
 
         self.transition_probs = probs  # dict[tuple[state, action], dict[state, transition_probability]]
 
@@ -39,10 +41,10 @@ class gridworld_windy(gridworld_base):
 
     def _move_impl(self, state: tuple[int, int], action: str) -> object:
         # should return new state after action from the state
-        transition_probs = self.transition_probs[state]
-        states = list(transition_probs.kys())
-        state_probs = list(transition_probs.vales())
-        random_step_id = np.random.chice(len(state_probs), p=state_probs)
+        transition_probs = self.transition_probs[(state, action)]
+        states = list(transition_probs.keys())
+        state_probs = list(transition_probs.values())
+        random_step_id = np.random.choice(len(state_probs), p=state_probs)
         return states[random_step_id]
 
     def get_state_transition_probs(self) -> dict[tuple[tuple[int, int], str], dict[tuple[int, int], float]]:
