@@ -3,19 +3,11 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 from rl.games.grid_policies import generate_random_grid_policy
-from rl.monte_carlo.epsilon_greedy_policy_optimization import monte_carlo_exploring_starts_deterministic_policy_optimization
+from rl.monte_carlo.epsilon_greedy_policy_optimization import \
+    monte_carlo_epsilon_greedy_deterministic_policy_optimization
 from tests.rl.dynamic_programming.gridworld_examples import grid_5x5, build_windy_grid_penalized, \
     build_standart_simple_grid, build_negative_simple_grid, build_windy_grid, build_windy_grid_no_wind
-
-
-def print_state_visit_counts(game, state_action_counts):
-    state_sample_count_arr = np.zeros((game.n_rows, game.n_cols))
-    for (s, a), count in state_action_counts.items():
-        i, j = s
-        state_sample_count_arr[i, j] += count
-    df = pd.DataFrame(state_sample_count_arr)
-    print(df)
-
+from tests.rl.monte_carlo.exploring_starts_policy_optimization_tests import print_state_visit_counts
 
 if __name__ == '__main__':
     policy = {
@@ -52,8 +44,8 @@ if __name__ == '__main__':
         (2, 2): 'L',
         (2, 3): 'D'}
 
-    grid_factory=lambda: build_standart_simple_grid()
-    #grid_factory=lambda: build_negative_simple_grid()
+    #grid_factory=lambda: build_standart_simple_grid()
+    grid_factory=lambda: build_negative_simple_grid()
     #grid_factory=lambda: grid_5x5()
 
     #grid_factory=lambda: build_windy_grid(quiet=True)
@@ -69,7 +61,7 @@ if __name__ == '__main__':
     print('\ninitial policy:')
     grid_example.print_policy(policy)
 
-    optimal_policy, V, Q, history, Q_counts = monte_carlo_exploring_starts_deterministic_policy_optimization(game_factory=grid_factory, initial_policy=random_policy, gamma=0.9)
+    optimal_policy, V, Q, history, Q_counts = monte_carlo_epsilon_greedy_deterministic_policy_optimization(game_factory=grid_factory, initial_policy=random_policy, gamma=0.9)
     print('\n\n----------OPTIMIZATION OVER----------')
     print('\nFinal policy (optimal policy for calculated value function V):')
     grid_example.print_policy(optimal_policy)

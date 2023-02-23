@@ -17,7 +17,7 @@ def monte_carlo_value_evaluation(game_factory, policy, n_episodes=200, max_steps
         game = game_factory()
         game_all_states = list(game.all_states())
         start_state = game_all_states[np.random.randint(len(game_all_states))]
-        game.set_state(start_state)
+        game.set_state(start_state)  # set random start state
         _, rewords, states = play_episode_by_deterministic_policy(game, policy, max_steps=max_steps)
 
         G = 0

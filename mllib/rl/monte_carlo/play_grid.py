@@ -1,4 +1,7 @@
-def play_episode_by_deterministic_policy(game, policy, initial_action=None, max_steps=20, on_invalid_action='break'):
+import numpy as np
+
+
+def play_episode_by_deterministic_policy(game, policy, initial_action=None, max_steps=20, on_invalid_action='break', with_epsilon_greedy=False, eps=0.1):
     assert on_invalid_action in ['break', 'no_effect']
     s = game.get_current_state()
     # states[t], reward[t] contains env state (response) on action[t]
@@ -15,6 +18,12 @@ def play_episode_by_deterministic_policy(game, policy, initial_action=None, max_
             a = initial_action
         else:
             a = policy[s]
+
+        # explore by epsilon greedy strategy
+        if with_epsilon_greedy:
+            p = np.random.random()
+            if p < eps:
+                a = np.random.choice(game.ACTION_SPACE)
 
         if on_invalid_action == 'no_effect':
             if game.is_valid_action(a):  # count invalid action as a move but stay in the same position and return reward for this position

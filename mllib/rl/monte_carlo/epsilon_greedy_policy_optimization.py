@@ -17,8 +17,13 @@ def get_best_action_and_q(action_q):
     return np.random.choice(best_actions), best_q
 
 
-def monte_carlo_exploring_starts_deterministic_policy_optimization(game_factory, initial_policy=None, n_episodes=10000, max_steps=20, gamma=0.9, mode='first_visit'):
+def monte_carlo_epsilon_greedy_deterministic_policy_optimization(game_factory, initial_policy=None, n_episodes=10000, max_steps=20, gamma=0.9, mode='first_visit'):
+    return monte_carlo_exploring_starts_deterministic_policy_optimization(game_factory, initial_policy, n_episodes, max_steps, gamma, mode, explore_mode='epsilon_greedy')
+
+
+def monte_carlo_exploring_starts_deterministic_policy_optimization(game_factory, initial_policy=None, n_episodes=10000, max_steps=20, gamma=0.9, mode='first_visit', explore_mode='exploring_starts'):
     assert mode in ['first_visit', 'every_visit']  # [first visit MC, every visit MC]
+    assert explore_mode in ['exploring_starts', 'epsilon_greedy']  # [exploring starts MC, epsilon greedy MC]
 
     Q_counts = {}
     Q = {}  # dict[state, action] = p(s', r | s, a)
@@ -40,12 +45,23 @@ def monte_carlo_exploring_starts_deterministic_policy_optimization(game_factory,
 
         biggest_change = 0
         game = game_factory()
-        game_all_states = list(game.all_states())
-        start_state = game_all_states[np.random.randint(len(game_all_states))]
-        game.set_state(start_state)
+        if explore_mode == 'exploring_starts':
+            # explore random starting state
+            game_all_states = list(game.all_states())
+            start_state = game_all_states[np.random.randint(len(game_all_states))]
+            game.set_state(start_state)
 
-        first_random_action = np.random.choice(game.ACTION_SPACE)
-        actions, rewords, states = play_episode_by_deterministic_policy(game, policy, initial_action=first_random_action, max_steps=max_steps, on_invalid_action='no_effect')
+            # choose random first action so that all (s, a) are explored to get data for Q
+            first_action = np.random.choice(game.ACTION_SPACE)
+            use_epsilon_greedy = False
+        elif explore_mode == 'epsilon_greedy':
+            # take action from policy and explore by epsilon greedy
+            first_action = None
+            use_epsilon_greedy = True
+        else:
+            raise Exception(f'Invalid  mode: {mode} of MC exploring strategy. Supported modes are: "exploring_starts" and "epsilon_greedy"')
+
+        actions, rewords, states = play_episode_by_deterministic_policy(game, policy, initial_action=first_action, max_steps=max_steps, on_invalid_action='no_effect', with_epsilon_greedy=use_epsilon_greedy)
 
         states_actions = list(zip(states, actions))
         # calculate Q
@@ -74,4 +90,4 @@ def monte_carlo_exploring_starts_deterministic_policy_optimization(game_factory,
         history.append(biggest_change)
 
     V = {state: get_best_action_and_q(actions_q)[1] for state, actions_q in Q.items()}
-    return policy, V, Q, history
+    return policy, V, Q, history, Q_counts
