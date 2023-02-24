@@ -1,7 +1,7 @@
 import numpy as np
 
 from rl.games.grid_policies import generate_random_grid_policy
-from rl.monte_carlo.play_grid import play_episode_by_deterministic_policy
+from rl.monte_carlo.play_grid import play_episode_by_deterministic_policy, get_best_action_and_q
 
 
 def mean_count_quick(old_mean, n, x):
@@ -9,12 +9,6 @@ def mean_count_quick(old_mean, n, x):
     lr = 1 / new_n
     new_mean = old_mean + lr * (x - old_mean)
     return new_mean, new_n
-
-
-def get_best_action_and_q(action_q):
-    best_q = max(action_q.values())
-    best_actions = [a for a, q in action_q.items() if q == best_q]
-    return np.random.choice(best_actions), best_q
 
 
 def monte_carlo_epsilon_greedy_deterministic_policy_optimization(game_factory, initial_policy=None, n_episodes=10000, max_steps=20, gamma=0.9, mode='first_visit'):
@@ -63,7 +57,7 @@ def monte_carlo_exploring_starts_deterministic_policy_optimization(game_factory,
 
         actions, rewords, states = play_episode_by_deterministic_policy(game, policy, initial_action=first_action, max_steps=max_steps, on_invalid_action='no_effect', with_epsilon_greedy=use_epsilon_greedy)
 
-        states_actions = list(zip(states, actions))
+        states_actions_pairs = list(zip(states[:-1], actions[1:]))
         # calculate Q
         G = 0
         T = len(rewords)
@@ -75,7 +69,7 @@ def monte_carlo_exploring_starts_deterministic_policy_optimization(game_factory,
 
             old_q = Q[state][action]
             if mode == 'first_visit':
-                if (state, action) not in states_actions[:t]:  # if (state, action) was not seen earlier (only visit is taken under consideration)
+                if (state, action) not in states_actions_pairs[:t]:  # if (state, action) was not seen earlier (only visit is taken under consideration)
                     Q[state][action], Q_counts[(state, action)] = mean_count_quick(Q[state][action], Q_counts[(state, action)], G)
             elif mode == 'every_visit':
                 Q[state][action], Q_counts[(state, action)] = mean_count_quick(Q[state][action], Q_counts[(state, action)], G)

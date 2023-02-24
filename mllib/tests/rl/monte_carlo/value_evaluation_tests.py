@@ -30,10 +30,23 @@ if __name__ == '__main__':
         (2, 3): 'U',
     }
 
+    random_policy = {
+        (2, 0): 'U',
+        (1, 0): 'U',
+        (0, 0): 'R',
+        (0, 1): 'R',
+        (0, 2): 'R',
+        (1, 2): 'U',
+        (2, 1): 'R',
+        (2, 2): 'R',
+        (2, 3): 'U',
+    }
+
     #run_monte_carlo_value_evaluation(grid_factory=lambda: build_standart_simple_grid(), policy=policy)
     #run_monte_carlo_value_evaluation(grid_factory=lambda: build_negative_simple_grid(), policy=policy)
     #run_monte_carlo_value_evaluation(grid_factory=lambda: grid_5x5(), policy=policy)
 
     #run_monte_carlo_value_evaluation(grid_factory=lambda: build_windy_grid(quiet=True), policy=policy)
     #run_monte_carlo_value_evaluation(grid_factory=lambda: build_windy_grid_no_wind(quiet=True), policy=policy)
-    run_monte_carlo_value_evaluation(grid_factory=lambda: build_windy_grid_penalized(-0.2, quiet=True), policy=policy)
+    #run_monte_carlo_value_evaluation(grid_factory=lambda: build_windy_grid_penalized(-0.2, quiet=True), policy=policy)
+    run_monte_carlo_value_evaluation(grid_factory=lambda: build_windy_grid_penalized(-0.2, quiet=True), policy=random_policy)

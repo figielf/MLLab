@@ -8,11 +8,16 @@ from tests.rl.dynamic_programming.gridworld_examples import grid_5x5, build_wind
     build_standart_simple_grid, build_negative_simple_grid, build_windy_grid, build_windy_grid_no_wind
 
 
-def print_state_visit_counts(game, state_action_counts):
+def print_state_visit_counts(game, state_action_counts, norm_counts=False):
+    total = np.sum(list(state_action_counts.values()))
+
     state_sample_count_arr = np.zeros((game.n_rows, game.n_cols))
     for (s, a), count in state_action_counts.items():
         i, j = s
         state_sample_count_arr[i, j] += count
+
+    if norm_counts:
+        state_sample_count_arr /= total
     df = pd.DataFrame(state_sample_count_arr)
     print(df)
 
@@ -77,8 +82,9 @@ if __name__ == '__main__':
     grid_example.print_values(V)
     print('\nfinal V:', V)
 
-    print('\nstate visit counts:')
+    print('\nstate visit count rates:')
     print_state_visit_counts(grid_example, Q_counts)
 
     plt.plot(history)
+    plt.title('Q convergence')
     plt.show()

@@ -1,5 +1,3 @@
-import numpy as np
-import pandas as pd
 from matplotlib import pyplot as plt
 
 from rl.games.grid_policies import generate_random_grid_policy
@@ -58,6 +56,8 @@ if __name__ == '__main__':
     #policy = policy
     #policy = probabilistic_policy
     policy = random_policy
+    print('\ngrid rewards:')
+    grid_example.print_values(grid_example.rewards)
     print('\ninitial policy:')
     grid_example.print_policy(policy)
 
@@ -69,8 +69,9 @@ if __name__ == '__main__':
     grid_example.print_values(V)
     print('\nfinal V:', V)
 
-    print('\nstate visit counts:')
+    print('\nstate visit count rates:')
     print_state_visit_counts(grid_example, Q_counts)
 
     plt.plot(history)
+    plt.title('Q convergence')
     plt.show()
