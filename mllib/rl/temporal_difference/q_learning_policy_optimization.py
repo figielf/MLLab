@@ -21,12 +21,11 @@ def temporal_difference_q_learning_policy_evaluation(game_factory, n_episodes=10
             print(f'episode {i}/{n_episodes}')
         game = game_factory()
         state = game.get_current_state()
-        action = get_epsilon_greedy_optimal_action_from_q(game, Q, state, eps=eps)
         delta = 0
         episode_reward = 0
         while not game.is_game_over():
             action, reward, new_state = play_one_move_by_optimal_action_based_on_q(game, Q, on_invalid_action='no_effect', with_epsilon_greedy=True, eps=eps)
-            best_next_action, max_q = get_best_action_and_q(Q[new_state])
+            _, max_q = get_best_action_and_q(Q[new_state])
 
             old_q = Q[state][action]
             Q[state][action] = Q[state][action] + alpha * (reward + gamma * max_q - Q[state][action])
@@ -34,10 +33,9 @@ def temporal_difference_q_learning_policy_evaluation(game_factory, n_episodes=10
             episode_reward += reward
 
             # calculate change in Q values
-            delta = max(delta, np.abs(old_q - Q[state][action]))  # check convergence
+            delta = max(delta, np.abs(Q[state][action] - old_q))  # check convergence
 
             state = new_state
-            action = best_next_action
         deltas.append(delta)
         episode_rewards.append(episode_reward)
     history = deltas, episode_rewards

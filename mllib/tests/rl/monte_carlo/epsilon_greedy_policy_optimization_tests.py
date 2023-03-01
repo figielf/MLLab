@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 
 from rl.games.grid_policies import generate_random_grid_policy
-from rl.monte_carlo.epsilon_greedy_policy_optimization import \
+from rl.monte_carlo.policy_optimization import \
     monte_carlo_epsilon_greedy_deterministic_policy_optimization
 from tests.rl.dynamic_programming.gridworld_examples import grid_5x5, build_windy_grid_penalized, \
     build_standart_simple_grid, build_negative_simple_grid, build_windy_grid, build_windy_grid_no_wind

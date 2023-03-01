@@ -21,7 +21,6 @@ def temporal_difference_sarsa_policy_evaluation(game_factory, n_episodes=10000, 
             print(f'episode {i}/{n_episodes}')
         game = game_factory()
         state = game.get_current_state()
-        action = get_epsilon_greedy_optimal_action_from_q(game, Q, state, eps=eps)
         delta = 0
         episode_reward = 0
         while not game.is_game_over():
@@ -37,7 +36,6 @@ def temporal_difference_sarsa_policy_evaluation(game_factory, n_episodes=10000, 
             delta = max(delta, np.abs(Q[state][action] - old_q))  # check convergence
 
             state = new_state
-            action = next_action
         deltas.append(delta)
         episode_rewards.append(episode_reward)
     history = deltas, episode_rewards
