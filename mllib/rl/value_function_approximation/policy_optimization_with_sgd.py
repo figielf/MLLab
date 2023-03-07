@@ -1,72 +1,10 @@
 import numpy as np
-from sklearn.kernel_approximation import RBFSampler, Nystroem
+from sklearn.kernel_approximation import RBFSampler
 
 from rl.games.grid_policies import generate_random_grid_policy
-from rl.games.gridworld_base import gridworld_base
-from rl.monte_carlo.play_grid import play_episode_by_uniformly_random_actions, play_one_move_by_deterministic_policy, \
-    play_episode_by_deterministic_policy, play_one_move_by_optimal_action_based_on_q, \
-    get_epsilon_greedy_optimal_action_from_q, get_best_action_and_q
-
-
-class grid_state_action_encoder_decoder:
-    def __init__(self):
-        self.D = len(gridworld_base.ACTION_SPACE)
-        self.action2id = {}
-        self.id2action = {}
-        for id, action in enumerate(gridworld_base.ACTION_SPACE):
-            self.action2id[action] = id
-            self.id2action[id] = action
-
-    def action2vec(self, action):
-        vec = np.zeros(self.D, dtype=int)
-        vec[self.action2id[action]] = 1
-        return vec
-
-    def vec2action(self, vec):
-        npvec = np.array(vec)
-        assert npvec.shape == self.D
-        one_idx = npvec.nonzero()
-        assert len(one_idx) == 1
-        return self.id2action[one_idx]
-
-    def actions2vecs(self, actions):
-        vecs = []
-        for a in actions:
-            vecs.append(self.action2vec(a))
-        return vecs
-
-    def vecs2actions(self, vecs):
-        actions = []
-        for v in vecs:
-            actions.append(self.vec2action(v))
-        return actions
-
-    def encode_state_action(self, state, action):
-        s = np.array(state, dtype=int)
-        a = self.action2vec(action)
-        sa = np.concatenate([s, a])
-        return sa
-
-    def dencode_state_action(self, state_action):
-        s = state_action[:2]
-        a = self.vec2action(state_action[2:])
-        sa = np.concatenate([s, s])
-        return s, a
-
-    def encode_states_actions(self, states, actions):
-        sas = []
-        for s, a in zip(states, actions):
-            sas.append(self.encode_state_action(s, a))
-        return sas
-
-    def dencode_state_action(self, states_actions):
-        states = []
-        actions = []
-        for sa in states_actions:
-            s, a = self.dencode_state_action(sa)
-            states.append(s)
-            actions.append(a)
-        return states, actions
+from rl.games.grid_utils import grid_state_action_encoder_decoder, grid_gather_state_action_samples
+from rl.games.play_grid import play_episode_by_deterministic_policy, play_one_move_by_optimal_action_based_on_q
+from rl.games.epsilon_greedy import get_epsilon_greedy_optimal_action_from_q, get_best_action_and_q
 
 
 class approximation_function_action_value_evaluation_model:
@@ -90,6 +28,7 @@ class approximation_function_action_value_evaluation_model:
         return self._approximate(state_features)
 
     def predict_all_actions(self, state, actions):
+        print(tuple(state))
         predictions = {state: {}}
         for action in actions:
             predictions[state][action] = self.predict_one_sample(state, action)
@@ -99,17 +38,6 @@ class approximation_function_action_value_evaluation_model:
         state_action = self.sa_coder.encode_state_action(state, action)
         state_features = self.states_transformer.transform([state_action])[0]
         return state_features
-
-
-def gather_state_action_samples(game, n_episodes=10000):
-    all_states = []
-    all_actions = []
-    for _ in range(n_episodes):
-        game.reset()
-        episode_actions, _, episode_states = play_episode_by_uniformly_random_actions(game, on_invalid_action='no_effect')
-        all_actions.extend(episode_actions[1:])  # flatten as one sample list
-        all_states.extend(episode_states[:-1])  # flatten as one sample list
-    return all_states, all_actions
 
 
 def calc_v_q_optimal_policy(game, model):
@@ -134,7 +62,7 @@ def calc_v_q_optimal_policy(game, model):
 
 def sgd_approximation_sarsa_policy_evaluation(game_factory, n_episodes=10000, gamma=0.9, alpha=0.1, eps=0.1, learning_rate=0.1):
     game_example = game_factory()
-    sample_play_states, sample_play_actions = gather_state_action_samples(game_example)
+    sample_play_states, sample_play_actions = grid_gather_state_action_samples(game_example)
     states_featurizer = RBFSampler()
     #states_featurizer = Nystroem()
     q_model = approximation_function_action_value_evaluation_model(states_featurizer)
@@ -160,7 +88,7 @@ def sgd_approximation_sarsa_policy_evaluation(game_factory, n_episodes=10000, ga
                 target = reward
             else:
                 new_state_q_hat = q_model.predict_all_actions(new_state, game.ACTION_SPACE)
-                next_action = get_epsilon_greedy_optimal_action_from_q(game, new_state_q_hat, new_state, eps=eps)
+                next_action = get_epsilon_greedy_optimal_action_from_q(game.ACTION_SPACE, new_state_q_hat, new_state, eps=eps)
                 target = reward + gamma * new_state_q_hat[new_state][next_action]
 
             error = q_hat[state][action] - target
@@ -180,7 +108,7 @@ def sgd_approximation_sarsa_policy_evaluation(game_factory, n_episodes=10000, ga
 
 def sgd_approximation_q_learning_policy_evaluation(game_factory, n_episodes=10000, gamma=0.9, eps=0.1, learning_rate=0.1):
     game_example = game_factory()
-    sample_play_states, sample_play_actions = gather_state_action_samples(game_example)
+    sample_play_states, sample_play_actions = grid_gather_state_action_samples(game_example)
     states_featurizer = RBFSampler()
     #states_featurizer = Nystroem()
     q_model = approximation_function_action_value_evaluation_model(states_featurizer)
@@ -233,7 +161,7 @@ def sgd_approximation_monte_carlo_exploring_starts_deterministic_policy_optimiza
     assert explore_mode in ['exploring_starts', 'epsilon_greedy']  # [exploring starts MC, epsilon greedy MC]
 
     game_example = game_factory()
-    sample_play_states, sample_play_actions = gather_state_action_samples(game_example)
+    sample_play_states, sample_play_actions = grid_gather_state_action_samples(game_example)
     states_featurizer = RBFSampler()
     #states_featurizer = Nystroem()
     q_model = approximation_function_action_value_evaluation_model(states_featurizer)

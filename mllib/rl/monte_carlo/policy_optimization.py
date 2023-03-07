@@ -1,7 +1,8 @@
 import numpy as np
 
 from rl.games.grid_policies import generate_random_grid_policy
-from rl.monte_carlo.play_grid import play_episode_by_deterministic_policy, get_best_action_and_q
+from rl.games.play_grid import play_episode_by_deterministic_policy
+from rl.games.epsilon_greedy import get_best_action_and_q
 
 
 def mean_count_quick(old_mean, n, x):

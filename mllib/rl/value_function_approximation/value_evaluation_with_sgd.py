@@ -1,7 +1,8 @@
 import numpy as np
-from sklearn.kernel_approximation import RBFSampler, Nystroem
+from sklearn.kernel_approximation import RBFSampler
 
-from rl.monte_carlo.play_grid import play_episode_by_uniformly_random_actions, play_one_move_by_deterministic_policy, \
+from rl.games.grid_utils import gather_grid_state_samples
+from rl.games.play_grid import play_one_move_by_deterministic_policy, \
     play_episode_by_deterministic_policy
 
 
@@ -27,19 +28,10 @@ class approximation_function_state_value_evaluation_model:
         return state_features
 
 
-def gather_state_samples(game, n_episodes=10000):
-    all_states = []
-    for _ in range(n_episodes):
-        game.reset()
-        _, _, episode_states = play_episode_by_uniformly_random_actions(game, on_invalid_action='no_effect')
-        all_states.extend(episode_states)  # flatten all states
-    return all_states
-
-
 def sgd_approximation_temporal_difference_value_evaluation(game_factory, policy, n_episodes=10000, gamma=0.9, learning_rate=0.01):
     # approximate Value function with target from temporal difference method: y = r + V[s']
     game_example = game_factory()
-    sample_play_results = gather_state_samples(game_example)
+    sample_play_results = gather_grid_state_samples(game_example)
 
     states_featurizer = RBFSampler()
     #states_featurizer = Nystroem()
@@ -91,7 +83,7 @@ def sgd_approximation_monte_carlo_value_evaluation(game_factory, policy, n_episo
     assert mode in ['first_visit', 'every_visit']  # [first visit MC, every visit MC]
 
     game_example = game_factory()
-    sample_play_results = gather_state_samples(game_example)
+    sample_play_results = gather_grid_state_samples(game_example)
 
     states_featurizer = RBFSampler()
     #states_featurizer = Nystroem()

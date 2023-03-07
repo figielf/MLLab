@@ -1,35 +1,7 @@
 import numpy as np
 
-
-def get_best_action_and_q(action_q):
-    best_q = max(action_q.values())
-    best_actions = [a for a, q in action_q.items() if q == best_q]
-    return np.random.choice(best_actions), best_q
-
-
-def get_epsilon_greedy_policy_action(game, policy, state, eps):
-    action = policy[state]
-
-    # explore by epsilon greedy strategy
-    p = np.random.random()
-    if p < eps:
-        action = np.random.choice(game.ACTION_SPACE)
-    return action
-
-
-def get_optimal_action_from_q(Q, state):
-    action, _ = get_best_action_and_q(Q[state])
-    return action
-
-
-def get_epsilon_greedy_optimal_action_from_q(game, Q, state, eps):
-    action = get_optimal_action_from_q(Q, state)
-
-    # explore by epsilon greedy strategy
-    p = np.random.random()
-    if p < eps:
-        action = np.random.choice(game.ACTION_SPACE)
-    return action
+from rl.games.epsilon_greedy import get_epsilon_greedy_policy_action, get_epsilon_greedy_optimal_action_from_q, \
+    get_optimal_action_from_q
 
 
 def play_one_move_by_optimal_action_based_on_q(game, Q, state=None, on_invalid_action='break', with_epsilon_greedy=False, eps=0.1):
@@ -42,7 +14,7 @@ def play_one_move_by_optimal_action_based_on_q(game, Q, state=None, on_invalid_a
         return None
 
     if with_epsilon_greedy:
-        action = get_epsilon_greedy_optimal_action_from_q(game, Q, state, eps)
+        action = get_epsilon_greedy_optimal_action_from_q(game.ACTION_SPACE, Q, state, eps)
     else:
         action = get_optimal_action_from_q(Q, state)
 
@@ -70,7 +42,7 @@ def play_one_move_by_deterministic_policy(game, policy, state=None, on_invalid_a
         return None
 
     if with_epsilon_greedy:
-        action = get_epsilon_greedy_policy_action(game, policy, state, eps)
+        action = get_epsilon_greedy_policy_action(game.ACTION_SPACE, policy, state, eps)
     else:
         action = policy[state]
 

@@ -1,7 +1,7 @@
 import numpy as np
 
-from rl.monte_carlo.play_grid import get_epsilon_greedy_optimal_action_from_q, \
-    play_one_move_by_optimal_action_based_on_q, get_best_action_and_q, get_optimal_action_from_q
+from rl.games.play_grid import play_one_move_by_optimal_action_based_on_q
+from rl.games.epsilon_greedy import get_best_action_and_q
 
 
 def temporal_difference_q_learning_policy_evaluation(game_factory, n_episodes=10000, gamma=0.9, alpha=0.1, eps=0.1):

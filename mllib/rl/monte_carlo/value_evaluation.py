@@ -1,6 +1,6 @@
 import numpy as np
 
-from rl.monte_carlo.play_grid import play_episode_by_deterministic_policy
+from rl.games.play_grid import play_episode_by_deterministic_policy
 
 
 def monte_carlo_value_evaluation(game_factory, policy, n_episodes=200, max_steps=20, gamma=0.9, mode='first_visit'):

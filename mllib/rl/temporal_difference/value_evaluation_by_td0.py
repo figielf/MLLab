@@ -1,6 +1,6 @@
 import numpy as np
 
-from rl.monte_carlo.play_grid import play_one_move_by_deterministic_policy
+from rl.games.play_grid import play_one_move_by_deterministic_policy
 
 
 def temporal_difference_value_evaluation(game_factory, policy, n_episodes=10000, gamma=0.9, alpha=0.1):
