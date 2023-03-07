@@ -541,3 +541,12 @@ def get_advertisement_clicks_data_raw(train_size=0.8):
     return X_train, X_test, Y_train, Y_test
 
 
+def get_stock_market_timeseries_data(train_size=0.8):
+    assert train_size >= 0
+    df = pd.read_csv(get_data_dir('aapl_msi_sbux.csv')).values
+
+    n_train = df.shape[0] // 2
+    train_df = df[:n_train]
+    test_df = df[n_train:]
+    return train_df, test_df
+
