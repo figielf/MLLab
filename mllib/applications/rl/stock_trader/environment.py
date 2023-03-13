@@ -19,7 +19,7 @@ class stock_market:
         self.stocks_in_portfolio = None
 
         # helpers
-        self.t = None
+        self.t = 0
         self.action_space = np.arange(self.n_stocks ** 3, dtype=int)
 
         # create list of all possible combinations of buy, hold, sell for each equity, 0 - sell, 1 - hold, 2 - buy
