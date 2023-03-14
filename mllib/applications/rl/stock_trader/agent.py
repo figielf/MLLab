@@ -34,9 +34,9 @@ class q_learning_agent(object):
         # run one training step
         mse = self.model.fit_one_batch(state, target_all_actions)
 
-        #self.epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_min)
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+        self.epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_min)
+        #if self.epsilon > self.epsilon_min:
+        #    self.epsilon *= self.epsilon_decay
 
         return mse
 

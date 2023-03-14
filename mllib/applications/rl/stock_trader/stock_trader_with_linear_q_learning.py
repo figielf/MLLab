@@ -15,9 +15,6 @@ from applications.rl.stock_trader.environment import stock_market
 from tests.utils.data_utils import get_stock_market_timeseries_data
 
 
-np.random.seed(12345)
-
-
 def make_dir(directory):
   if not os.path.exists(directory):
     os.makedirs(directory)
