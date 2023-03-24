@@ -9,7 +9,7 @@ from datasets import load_dataset
 from torch.utils.data import DataLoader
 
 from tests.transformers.encoder_tests import set_seed, preprocess_hugging_face_dataset, train_model, DEVICE
-from transformers_and_attention.decoder import SequenceClassificationDecoder
+from transformers_and_attention.decoder import TextGenerationDecoder
 
 
 def dummy_data_test(model):
@@ -53,11 +53,6 @@ def evaluate_decoder_model(model, data_loader, pad_token):
     n_total = 0
     for batch in data_loader:
         batch = {k: v.to(DEVICE) for k, v in batch.items()}
-        #
-        # print('--------------------------------------------------------------------------')
-        # print('--------------------------------------------------------------------------')
-        # print('--------------------------------------------------------------------------')
-
         y_hat_prob = model(batch['input_ids'], batch['attention_mask'] == 1)
         _, y_hat = torch.max(y_hat_prob, dim=-1)
 
@@ -70,28 +65,8 @@ def evaluate_decoder_model(model, data_loader, pad_token):
         targets_masked = targets.masked_fill(comapre_mask == 0, -1)
         y_hat_masked = y_hat.masked_fill(comapre_mask == 0, -2)
 
-        # print("\nbatch['attention_mask'].shape:", batch['attention_mask'].shape)
-        # print('attention_mask:', batch['attention_mask'])
-        #
-        # print('\nbatch["input_ids"].shape:', batch['input_ids'].shape)
-        # print('batch["input_ids"]:', batch['input_ids'])
-        #
-        # print('\ny_hat.shape:', y_hat.shape)
-        # print('y_hat:', y_hat)
-        print('\ny_hat_masked:', y_hat_masked)
-        #
-        # print('\ntargets.shape:', targets.shape)
-        # print('targets:', targets)
-        print('targets_masked:', targets_masked)
-        print('y_hat_masked == targets_masked).sum().item():', (y_hat_masked == targets_masked).sum().item())
-        print('n_tokens_to_predict:', n_tokens_to_predict)
-        print('barch accuracy:', (y_hat_masked == targets_masked).sum().item() / n_tokens_to_predict)
         n_correct += (y_hat_masked == targets_masked).sum().item()
         n_total += n_tokens_to_predict
-
-    print('\n\nIN TOTAL')
-    print('n_correct:', n_correct)
-    print('n_total:', n_total)
     accuracy = n_correct / n_total
     return accuracy
 
@@ -148,18 +123,20 @@ def predict_text_following_a_prompt_by_decoder(model, tokenizer, data_collator, 
     for sent in sentences:
         model_inputs = tokenizer(sent, truncation=True, return_tensors='pt')
         sentence = model_inputs['input_ids'].to(DEVICE)
-        mask = model_inputs['attention_mask'].to(DEVICE)
+        padding_mask = model_inputs['attention_mask'].to(DEVICE)
         predicted_words = []
         for i in range(max_words):
-            output = model(sentence, mask)
+            output = model(sentence, padding_mask)
             last_word_predictions = output[:, -1, :]
             probs = F.softmax(last_word_predictions, dim=-1)
             probability, predicted_word_id = torch.max(probs, dim=-1)  # probs shape=(N, T, n_classes)
             predicted_word = tokenizer.decode(predicted_word_id)
             predicted_words.append(predicted_word)
 
+            print(predicted_word)
+
             sentence = torch.hstack((sentence, predicted_word_id.view(1, 1)))
-            mask = torch.ones_like(sentence)
+            padding_mask = torch.ones_like(sentence)
             if predicted_word_id == tokenizer.sep_token_id:
                 break
 
@@ -168,14 +145,13 @@ def predict_text_following_a_prompt_by_decoder(model, tokenizer, data_collator, 
 
 
 def get_decoder_model(vs, ml):
-    model = SequenceClassificationDecoder(
+    model = TextGenerationDecoder(
         vocab_size=vs,
         max_len=ml,
-        d_k=16,
+        d=16,
         d_model=64,
         n_heads=4,
         n_layers=2,
-        n_classes=vs,  # this is language model so predicting next words in hte sequence
         dropout_prob=0.1,
     )
     model.to(DEVICE)
@@ -186,14 +162,14 @@ def get_decoder_model(vs, ml):
 if __name__ == '__main__':
     set_seed()
 
-    #model = SequenceClassificationDecoder(20_000, 1024, 16, 64, 4, 2, 20000, 0.1)
+    #model = TextGenerationDecoder(20_000, 1024, 16, 64, 4, 2, 20000, 0.1)
     #dummy_data_test(model.to(DEVICE))
 
     # run model training and prediction on real data
     checkpoint = 'distilbert-base-cased'
     data = load_dataset("glue", "sst2")
 
-    model, tokenizer, data_collator = train_decoder_on_hagging_face_data(get_decoder_model, checkpoint, data, batch_size=128, n_epochs=4)
+    model, tokenizer, data_collator = train_decoder_on_hagging_face_data(get_decoder_model, checkpoint, data, batch_size=128, n_epochs=1)
 
     print('-----------------------------------------------------------------------------')
     print('-----------------------------------------------------------------------------')

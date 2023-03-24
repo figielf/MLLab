@@ -58,7 +58,7 @@ def preprocess_hugging_face_dataset(checkpoint, raw_datasets, use_labels=True):
 
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
     print(f'\ndata collator:\n{data_collator}')
-    print(f'example of padded data:\n{tokenized_datasets["train"][:3]}')
+    print(f'example of data:\n{tokenized_datasets["train"][:3]}')
 
     tokenized_datasets = tokenized_datasets.remove_columns(["sentence", "idx"])
     if use_labels:
@@ -136,6 +136,8 @@ def train_model(model, criterion, optimizer, n_epochs, targets_provider, train_l
 
             print(f'\tbatch {ib + 1}, train criterion value: {train_batch_loss.item()}')
 
+            if ib>3:
+                break
         for metric, metric_calculator in metric_calculators.items():
             train_history[metric].append(metric_calculator(epoch_train_scores, epoch_train_scores_weights))
 
@@ -196,9 +198,8 @@ def predict_text_sentiment_by_encoder(model, tokenizer, sentences):
     predictions = []
     for sent in sentences:
         model_inputs = tokenizer(sent, truncation=True, return_tensors='pt')
-        output = model(model_inputs['input_ids'].to(DEVICE), model_inputs['attention_mask'].to(DEVICE))
-        probs = F.softmax(output, dim=-1)
-        probability, predicted_class = torch.max(probs, dim=-1)
+        logits = model(model_inputs['input_ids'].to(DEVICE), model_inputs['attention_mask'].to(DEVICE), return_logits=True)
+        probability, predicted_class = torch.max(logits, dim=-1)
         predictions.append((sent, predicted_class.item(), probability.item()))
     return predictions
 
@@ -214,7 +215,7 @@ def get_encoder_model(vs, ml):
     model = TextClassificationEncoder(
         vocab_size=vs,
         max_len=ml,
-        d_k=16,
+        d=16,
         d_model=64,
         n_heads=4,
         n_layers=2,
