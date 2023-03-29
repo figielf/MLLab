@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,12 +7,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from datasets import load_dataset
 from torch.utils.data import DataLoader
-from transformers import AutoTokenizer, DataCollatorWithPadding, DataCollatorForSeq2Seq, PreTrainedTokenizerFast
 
-from tests.transformers.decoder_tests import evaluate_decoder_model
-from tests.transformers.encoder_tests import DEVICE, set_seed
+from tests.transformers.common import set_seed, calc_avg_metric, preprocess_spa_dataset_for_encoder_decoder_translation, train_model, DEVICE
 from tests.utils.data_utils import get_data_dir
-from transformers_and_attention.encoder import EmbeddingEncoder
 from transformers_and_attention.encoder_decoder import TextTranslationTransformer
 
 
@@ -45,81 +40,100 @@ def encoder_decoder_dummy_data_test(model):
     print(f'\n----------END OF DUMMY DATA TEST----------\n\n')
 
 
-def preprocess_spa_dataset_for_encoder_decoder_translation(checkpoint, raw_dataset, max_input_length=128, max_target_length=128, split_test_size=0.3):
-    print(f'\n-----     "{raw_dataset}" with "{checkpoint}" data preprocessing is about to start     -----\n')
+def get_data_for_encoder_decoder_model(batch, tokenizer):
+    # get targets as inputs shifted right by 1
+    decoder_input_ids = batch['labels'].clone().detach()
+    decoder_input_ids = torch.roll(decoder_input_ids, shifts=1, dims=1)  # first dimension is N
+    decoder_input_ids[:, 0] = tokenizer.cls_token_id
+    decoder_input_ids = decoder_input_ids.masked_fill(decoder_input_ids == -100, tokenizer.pad_token_id)
 
-    def tokenize_fn(batch):
-        inputs = tokenizer(batch['en'], max_length=max_input_length, truncation=True)
-        labels = tokenizer(text_target=batch['es'], max_length=max_target_length, truncation=True)
-        inputs["labels"] = labels["input_ids"]
-        return inputs
+    decoder_attention_mask = torch.ones_like(decoder_input_ids)
+    decoder_attention_mask = decoder_attention_mask.masked_fill(decoder_input_ids == tokenizer.pad_token_id, 0)
+    return [batch['input_ids'], decoder_input_ids, batch['attention_mask'], decoder_attention_mask]
 
 
-    print(f'\nraw spa (english to spanish translation) data before preprocessing:\n{raw_dataset}')
-    print(f'example of raw data:\n{raw_dataset["train"][:3]}')
+def evaluate_eoncoder_decoder_model(model, data_loader, model_parameters_builder, targets_provider):
+    model.eval()
 
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-    print(f'\ntokenizer vocabulary size: {tokenizer.vocab_size}')
-    print(f'\ntokenizer max_model_input_sizes: {tokenizer.max_model_input_sizes}')
-    print(f'\ntokenizer spacial token: {tokenizer.all_special_tokens}')
-    print(f'tokenizer spacial token ids: {tokenizer.all_special_ids}')
+    n_correct = 0
+    n_total = 0
+    for batch in data_loader:
+        if n_total > 500:
+            break
 
-    raw_dataset_splitted = raw_dataset['train'].train_test_split(test_size=split_test_size)
-    tokenized_datasets = raw_dataset_splitted.map(
-        tokenize_fn,
-        batched=True,
-        remove_columns=raw_dataset_splitted["train"].column_names,
-    )
-    print(f'\ntokenized data:\n{tokenized_datasets}')
-    print(f'example of tokenized data:\n{tokenized_datasets["train"][:3]}')
+        batch = {k: v.to(DEVICE) for k, v in batch.items()}
 
-    data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer)
-    print(f'\ndata collator:\n{data_collator}')
-    en_sentences = raw_dataset_splitted["train"][0:3]["en"]
-    es_sentences = raw_dataset_splitted["train"][0:3]["es"]
-    print(f'\nexample of english sentences:\n{en_sentences}')
-    print(f'and its version encoded back to tokens:')
-    for input_ids in tokenized_datasets["train"][:3]["input_ids"]:
-        print(tokenizer.decode(input_ids))
-    print(f'\ntheir translations to spanish:\n{es_sentences}')
-    print(f'and its version encoded back to tokens:')
-    for input_ids in tokenized_datasets["train"][:3]["labels"]:
-        print(tokenizer.decode(input_ids))
+        input_ids, decoder_input_ids, attention_mask, decoder_attention_mask = model_parameters_builder(batch)
+        y_hat_prob = model(input_ids, decoder_input_ids, attention_mask, decoder_attention_mask)
+        _, y_hat = torch.max(y_hat_prob, dim=-1)
 
-    print(f'\n-----     "{raw_dataset}" with "{checkpoint}" data preprocessing finished     -----\n')
-    return tokenized_datasets, tokenizer, data_collator
+        targets = targets_provider(batch)
+
+        comapre_mask = decoder_attention_mask
+        n_tokens_to_predict = torch.sum(comapre_mask)
+
+        targets_masked = targets.masked_fill(comapre_mask == 0, -1)
+        y_hat_masked = y_hat.masked_fill(comapre_mask == 0, -2)
+
+        n_correct += (y_hat_masked == targets_masked).sum().item()
+        n_total += n_tokens_to_predict
+    accuracy = n_correct / n_total
+    return accuracy
 
 
 def train_encoder_decoder_on_real_data(model_factory, checkpoint, dataset, batch_size=32, n_epochs=4):
     print(f'\n\n----------REAL DATA TEST----------\n')
-    tokenized_datasets, tokenizer, data_collator = preprocess_spa_dataset_for_encoder_decoder_translation(checkpoint, dataset)
-    tokenizer.add_special_tokens({"cls_token": "<s>"})  # add START prompt token to represent begining of the translation
-    V = tokenizer.vocab_size + 1  # vocab size including one special token that is not counted
-    print('Vocab size:', V)
+    tokenized_datasets, tokenizer, vocab_size, data_collator = preprocess_spa_dataset_for_encoder_decoder_translation(checkpoint, dataset)
+    print('Vocab size:', vocab_size)
 
     train_loader = DataLoader(tokenized_datasets["train"], batch_size=batch_size, shuffle=True, collate_fn=data_collator)
     validation_loader = DataLoader(tokenized_datasets["test"], batch_size=batch_size, collate_fn=data_collator)
 
-    model = model_factory(V, V)
+    model = model_factory(vocab_size, vocab_size)
     model.to(DEVICE)
     optimizer = torch.optim.Adam(model.parameters())
-    shifted_inputs_provider = lambda batch: get_targets_for_decoder(batch, tokenizer.pad_token_id)
-
-    criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
+    criterion = nn.CrossEntropyLoss(ignore_index=-100)
     def decoder_criterion(prediction, target):
         # decoder model outputs are N x T x V but PyTorch CrossEntropyLoss expects N x V x T
         return criterion(prediction.transpose(2, 1), target)
+    labels_provider = lambda batch: batch['labels']
+    model_param_builder = lambda batch: get_data_for_encoder_decoder_model(batch, tokenizer)
+
+
+
+
+    print('\nNext word prediction task:\n')
+    text_in_english = ['What a nice day, isn"t it?',
+                      'This car is very fast',
+                      'Have a nice day',
+                      'Mares has a brother and he really likes him']
+    predictions = translate_text(model, tokenizer, data_collator, text_in_english, max_words=10)
+    print(pd.DataFrame(predictions, columns=['text in english', 'translation in spanish']))
+
+
+
 
     print(f'\nTraining started\n')
-    train_losses, test_losses = train_model(model, decoder_criterion, optimizer, n_epochs=n_epochs, targets_provider=shifted_inputs_provider, train_loader=train_loader, test_loader=validation_loader, metric_calculators={'loss': calc_avg_metric})
+    train_losses, test_losses = train_model(
+        model,
+        decoder_criterion,
+        optimizer,
+        n_epochs=n_epochs,
+        targets_provider=labels_provider,
+        model_parameters_builder=model_param_builder,
+        train_loader=train_loader,
+        test_loader=validation_loader,
+        metric_calculators={'loss': calc_avg_metric})
     print(f'\nTraining finished\n')
 
     plt.plot(train_losses['loss'], label='train set loss')
     plt.legend()
     plt.show()
 
-    train_acc = evaluate_decoder_model(model, train_loader, pad_token=tokenizer.pad_token_id)
+    train_acc = evaluate_eoncoder_decoder_model(model, train_loader, model_parameters_builder=model_param_builder, targets_provider=labels_provider)
+    test_acc = evaluate_eoncoder_decoder_model(model, validation_loader, model_parameters_builder=model_param_builder, targets_provider=labels_provider)
     print(f'\nTrain accuracy: {train_acc}')
+    print(f'\nTest accuracy: {test_acc}')
     print(f'\n----------END OF REAL DATA TEST----------\n\n')
     return model, tokenizer, data_collator
 
@@ -136,19 +150,60 @@ def get_encoder_decoder_model(evs, dvs, eml=512, dml=512):
         n_layers=2,
         dropout_prob=0.1
     )
-    transformer.encoder.to(DEVICE)
-    transformer.decoder.to(DEVICE)
     return transformer
 
 
+def translate_text(model, tokenizer, data_collator, sentences, max_words=10):
+    model.eval()
+
+    predictions = []
+    for sent in sentences:
+        model_inputs = tokenizer(sent, truncation=True, return_tensors='pt')
+        sentence = model_inputs['input_ids'].to(DEVICE)
+        padding_mask = model_inputs['attention_mask'].to(DEVICE)
+        encoder_output = model.encoder(sentence, padding_mask)
+        decoder_start_sentence = tokenizer('<s>', return_tensors='pt')
+        decoder_input = decoder_start_sentence['input_ids'][:, :-1].to(DEVICE)
+        decoder_attention_mask = torch.ones_like(decoder_input, device=DEVICE)
+        predicted_words = []
+        for i in range(max_words):
+            output = model.decoder(encoder_output, decoder_input, padding_mask, decoder_attention_mask)
+            last_word_predictions = output[:, -1, :]
+            probs = F.softmax(last_word_predictions, dim=-1)
+            probability, predicted_word_id = torch.max(probs, dim=-1)  # probs shape=(N, T, n_classes)
+            predicted_word = tokenizer.decode(predicted_word_id)
+            predicted_words.append(predicted_word)
+
+            decoder_input = torch.hstack((decoder_input, predicted_word_id.view(1, 1)))
+            decoder_attention_mask = torch.ones_like(decoder_input, device=DEVICE)
+            if predicted_word_id == 0:  # == tokenizer('</s>')['input_ids][0][0]
+                break
+
+        predictions.append((sent, ' '.join(predicted_words)))
+    return predictions
+
+
 if __name__ == '__main__':
+    print('device:', DEVICE)
     set_seed()
 
-    model = TextGenerationDecoder(20_000, 1024, 16, 64, 4, 2, 20000, 0.1)
-    dummy_data_test(model.to(DEVICE))
+    #model = get_encoder_decoder_model(evs=20_000, dvs=10_000)
+    #encoder_decoder_dummy_data_test(model.to(DEVICE))
 
     # run model training and prediction on real data
     checkpoint = 'Helsinki-NLP/opus-mt-en-es'
     data = load_dataset('csv', data_files=get_data_dir('spa_simple_30k_samples.csv'))
 
-    model, tokenizer, data_collator = train_encoder_decoder_on_real_data(get_encoder_decoder_model, checkpoint, data, batch_size=128, n_epochs=4)
+    model, tokenizer, data_collator = train_encoder_decoder_on_real_data(get_encoder_decoder_model, checkpoint, data, batch_size=128, n_epochs=1)
+
+    print('-----------------------------------------------------------------------------')
+    print('-----------------------------------------------------------------------------')
+    print('-----------------------------------------------------------------------------')
+
+    print('\nEnglish to spanish text translation task:\n')
+    text_in_english = ['What a nice day, isn"t it?',
+                      'This car is very fast',
+                      'Have a nice day',
+                      'Mares has a brother and he really likes him']
+    predictions = translate_text(model, tokenizer, data_collator, text_in_english, max_words=10)
+    print(pd.DataFrame(predictions, columns=['text in english', 'translation in spanish']))

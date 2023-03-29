@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 
-from tests.transformers.encoder_tests import set_seed, preprocess_hugging_face_dataset, train_model, DEVICE
+from tests.transformers.common import set_seed, calc_avg_metric, preprocess_hugging_face_dataset, train_model, DEVICE, get_targets_for_decoder
 from transformers_and_attention.decoder import TextGenerationDecoder
 
 
@@ -29,34 +29,18 @@ def dummy_data_test(model):
     print(f'\n----------END OF DUMMY DATA TEST----------\n\n')
 
 
-def get_targets_for_decoder(batch, pad_token):
-    # get targets as inputs shifted right by 1
-    targets = batch['input_ids'].clone().detach()
-    targets = torch.roll(targets, shifts=-1, dims=1)  # first dimension is N
-    targets[:, -1] = pad_token
-    return targets
-
-
-def calc_avg_metric(scores, weights):
-    score_sum = 0
-    weights_sum = 0
-    for s, w in zip(scores, weights):
-        score_sum += s
-        weights_sum += 1
-    return score_sum / weights_sum
-
-
-def evaluate_decoder_model(model, data_loader, pad_token):
+def evaluate_decoder_model(model, data_loader, model_parameters_builder, targets_provider):
     model.eval()
 
     n_correct = 0
     n_total = 0
     for batch in data_loader:
         batch = {k: v.to(DEVICE) for k, v in batch.items()}
-        y_hat_prob = model(batch['input_ids'], batch['attention_mask'] == 1)
+
+        y_hat_prob = model(*model_parameters_builder(batch))
         _, y_hat = torch.max(y_hat_prob, dim=-1)
 
-        targets = get_targets_for_decoder(batch, pad_token)
+        targets = targets_provider(batch)
 
         comapre_mask = torch.roll(batch['attention_mask'], shifts=-1, dims=1)
         comapre_mask[:, -1] = 0
@@ -76,6 +60,7 @@ def train_decoder_on_hagging_face_data(model_factory, checkpoint, dataset, batch
     tokenized_datasets, tokenizer, data_collator = preprocess_hugging_face_dataset(checkpoint, dataset, use_labels=False)
 
     train_loader = DataLoader(tokenized_datasets['train'], batch_size=batch_size, shuffle=True, collate_fn=data_collator)
+    validation_loader = DataLoader(tokenized_datasets["test"], batch_size=batch_size, collate_fn=data_collator)
 
     model = model_factory(tokenizer.vocab_size, tokenizer.max_model_input_sizes[checkpoint])
     model.to(DEVICE)
@@ -83,20 +68,34 @@ def train_decoder_on_hagging_face_data(model_factory, checkpoint, dataset, batch
     shifted_inputs_provider = lambda batch: get_targets_for_decoder(batch, tokenizer.pad_token_id)
 
     criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
+    model_param_builder = lambda batch: [batch['input_ids'], batch['attention_mask']]
+
     def decoder_criterion(prediction, target):
         # decoder model outputs are N x T x V but PyTorch CrossEntropyLoss expects N x V x T
         return criterion(prediction.transpose(2, 1), target)
 
     print(f'\nTraining started\n')
-    train_losses, test_losses = train_model(model, decoder_criterion, optimizer, n_epochs=n_epochs, targets_provider=shifted_inputs_provider, train_loader=train_loader, test_loader=None, metric_calculators={'loss': calc_avg_metric})
+    train_losses, test_losses = train_model(
+        model,
+        decoder_criterion,
+        optimizer,
+        n_epochs=n_epochs,
+        targets_provider=shifted_inputs_provider,
+        model_parameters_builder=model_param_builder,
+        train_loader=train_loader,
+        test_loader=validation_loader,
+        metric_calculators={'loss': calc_avg_metric})
     print(f'\nTraining finished\n')
 
     plt.plot(train_losses['loss'], label='train set loss')
+    plt.plot(test_losses['loss'], label='test set loss')
     plt.legend()
     plt.show()
 
-    train_acc = evaluate_decoder_model(model, train_loader, pad_token=tokenizer.pad_token_id)
+    train_acc = evaluate_decoder_model(model, train_loader, model_parameters_builder=model_param_builder, targets_provider=shifted_inputs_provider)
+    test_acc = evaluate_decoder_model(model, validation_loader, model_parameters_builder=model_param_builder, targets_provider=shifted_inputs_provider)
     print(f'\nTrain accuracy: {train_acc}')
+    print(f'\nTest accuracy: {test_acc}')
     print(f'\n----------END OF REAL DATA TEST----------\n\n')
     return model, tokenizer, data_collator
 
@@ -158,8 +157,8 @@ def get_decoder_model(vs, ml):
     return model
 
 
-
 if __name__ == '__main__':
+    print('device:', DEVICE)
     set_seed()
 
     #model = TextGenerationDecoder(20_000, 1024, 16, 64, 4, 2, 20000, 0.1)

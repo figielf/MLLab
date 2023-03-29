@@ -15,7 +15,8 @@ class TextTranslationTransformer(nn.Module):
             d_model=d_model,
             n_heads=n_heads,
             n_layers=n_layers,
-            dropout_prob=dropout_prob)
+            dropout_prob=dropout_prob,
+            task_type='many_to_many')
         self.decoder = TextTranslationDecoder(
             vocab_size=decoder_vocab_size,
             max_len=decoder_max_len,

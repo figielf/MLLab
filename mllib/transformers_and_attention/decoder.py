@@ -15,14 +15,12 @@ class SequenceEmbeddingDecoder(nn.Module):
         self.transformer_blocks = nn.Sequential(*t_blocks)
         self.ln = nn.LayerNorm(d_model)
 
-    def forward(self, x, padding_mask=None, return_logits=False):  # x shape -> (N, T), input_padding_mask shape -> (N, T)
+    def forward(self, x, padding_mask=None):  # x shape -> (N, T), input_padding_mask shape -> (N, T)
         x = self.emb(x)  # -> (N, T, d_model)
         x = self.pos_encoding(x)  # -> (N, T, d_model)
         for t_block in self.transformer_blocks:
             x = self._call_transformer_block(t_block, x, padding_mask)  # -> (N, T, d_model)
         output = self.ln(x)  # -> (N, T, d_model)
-        if return_logits:
-            output = F.softmax(output, dim=-1)  # -> (N, T_output, d_model)
         return output
 
     def _build_transformer_block(self, d, d_model, n_heads, max_len, dropout_prob):
@@ -47,9 +45,9 @@ class TextGenerationDecoder(SequenceEmbeddingDecoder):
     def _build_transformer_block(self, d, d_model, n_heads, max_len, dropout_prob):
         return TransformerBlock(d, d_model, n_heads, dropout_prob=dropout_prob, is_casual=True, max_len=max_len, ann_h_dim=d_model * 4)
 
-    def _call_transformer_block(self, t_block, x, padding_mask):
-        return t_block(x, x, x, padding_mask)
-#
+    def _call_transformer_block(self, transformer_block, x, padding_mask):
+        return transformer_block(x, x, x, padding_mask)
+
 
 class TextTranslationDecoder(SequenceEmbeddingDecoder):
     def __init__(self, vocab_size, max_len, d, d_model, n_heads, n_layers, dropout_prob):
@@ -57,14 +55,16 @@ class TextTranslationDecoder(SequenceEmbeddingDecoder):
         self.final_classifier = nn.Linear(d_model, vocab_size)
 
     def forward(self, x_input, x_output, input_padding_mask=None, output_padding_mask=None, return_logits=False):  # x shape -> (N, T)
-        x = super().forward(x_output, mask=output_padding_mask, return_logits=return_logits)  # ->   # -> (N, T, n_classes)
+        self.x_input = x_input
+        self.input_padding_mask = input_padding_mask
+        x = super().forward(x_output, output_padding_mask)  # ->   # -> (N, T, n_classes)
         output = self.final_classifier(x)  # -> (N, T, n_classes)
         if return_logits:
             output = F.softmax(output, dim=-1)
         return output
 
     def _build_transformer_block(self, d, d_model, n_heads, max_len, dropout_prob):
-        return TransformerBlock(d, d_model, n_heads, dropout_prob=dropout_prob, is_casual=False, max_len=max_len, ann_h_dim=d_model * 4, add_causal_self_attention=True)
+        return TransformerBlock(d, d_model, n_heads, dropout_prob=dropout_prob, is_casual=False, max_len=max_len, ann_h_dim=d_model * 4, add_causal_question_attention=True)
 
-    def _call_transformer_block(self, transformer_block, x_input, x_output, input_padding_mask, output_padding_mask):
-        return transformer_block(x_output, x_input, x_input, input_padding_mask, output_padding_mask)
+    def _call_transformer_block(self, transformer_block, x_output, output_padding_mask):
+        return transformer_block(x_output, self.x_input, self.x_input, self.input_padding_mask, output_padding_mask)

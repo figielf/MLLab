@@ -17,7 +17,6 @@ class MultiHeadAttention(nn.Module):
         self.value = nn.Linear(d_model, self.h * self.d)
         self.final_dense = nn.Linear(self.h * self.d, d_model)
         self.max_len = max_len
-        print('self.max_len:', self.max_len)
 
         if is_casual:
             assert self.max_len is not None and isinstance(max_len, int)
