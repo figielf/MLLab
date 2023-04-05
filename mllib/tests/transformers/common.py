@@ -5,6 +5,9 @@ import torch
 from transformers import AutoTokenizer, DataCollatorWithPadding, DataCollatorForSeq2Seq
 
 
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
 def set_seed():
     torch.manual_seed(12345)
     np.random.seed(98765)
@@ -146,9 +149,6 @@ def train_model(model, criterion, optimizer, n_epochs, targets_provider, model_p
         epoch_train_scores = []
         epoch_train_scores_weights = []
         for ib, batch in enumerate(train_loader):
-            if ib>1:
-                break
-
             batch = {k: v.to(DEVICE) for k, v in batch.items()}
             targets = targets_provider(batch)
             optimizer.zero_grad()
@@ -181,7 +181,7 @@ def train_model(model, criterion, optimizer, n_epochs, targets_provider, model_p
                 batch_size = batch['input_ids'].shape[0]
                 epoch_test_scores.append(test_batch_loss.item())
                 epoch_test_scores_weights.append(batch_size)
-                #print(f'\tbatch {ib + 1}, test criterion value: {test_batch_loss.item()}')
+                print(f'\tbatch {ib + 1}, test criterion value: {test_batch_loss.item()}')
 
             for metric, metric_calculator in metric_calculators.items():
                 test_history[metric].append(metric_calculator(epoch_test_scores, epoch_test_scores_weights))
@@ -189,7 +189,3 @@ def train_model(model, criterion, optimizer, n_epochs, targets_provider, model_p
             test_report = f'Test Loss: {test_history["loss"][-1]}, '
         print(f'Epoch {i + 1}/{n_epochs}, Train Loss: {train_history["loss"][-1]}, {test_report}Duration: {datetime.now() - t0}')
     return train_history, test_history
-
-
-DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-

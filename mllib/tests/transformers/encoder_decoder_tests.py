@@ -99,20 +99,6 @@ def train_encoder_decoder_on_real_data(model_factory, checkpoint, dataset, batch
     labels_provider = lambda batch: batch['labels']
     model_param_builder = lambda batch: get_data_for_encoder_decoder_model(batch, tokenizer)
 
-
-
-
-    print('\nNext word prediction task:\n')
-    text_in_english = ['What a nice day, isn"t it?',
-                      'This car is very fast',
-                      'Have a nice day',
-                      'Mares has a brother and he really likes him']
-    predictions = translate_text(model, tokenizer, data_collator, text_in_english, max_words=10)
-    print(pd.DataFrame(predictions, columns=['text in english', 'translation in spanish']))
-
-
-
-
     print(f'\nTraining started\n')
     train_losses, test_losses = train_model(
         model,
@@ -187,14 +173,14 @@ if __name__ == '__main__':
     print('device:', DEVICE)
     set_seed()
 
-    #model = get_encoder_decoder_model(evs=20_000, dvs=10_000)
-    #encoder_decoder_dummy_data_test(model.to(DEVICE))
+    model = get_encoder_decoder_model(evs=20_000, dvs=10_000)
+    encoder_decoder_dummy_data_test(model.to(DEVICE))
 
     # run model training and prediction on real data
     checkpoint = 'Helsinki-NLP/opus-mt-en-es'
     data = load_dataset('csv', data_files=get_data_dir('spa_simple_30k_samples.csv'))
 
-    model, tokenizer, data_collator = train_encoder_decoder_on_real_data(get_encoder_decoder_model, checkpoint, data, batch_size=128, n_epochs=1)
+    model, tokenizer, data_collator = train_encoder_decoder_on_real_data(get_encoder_decoder_model, checkpoint, data, batch_size=128, n_epochs=15)
 
     print('-----------------------------------------------------------------------------')
     print('-----------------------------------------------------------------------------')

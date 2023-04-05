@@ -168,7 +168,7 @@ if __name__ == '__main__':
     checkpoint = 'distilbert-base-cased'
     data = load_dataset("glue", "sst2")
 
-    model, tokenizer, data_collator = train_decoder_on_hagging_face_data(get_decoder_model, checkpoint, data, batch_size=128, n_epochs=1)
+    model, tokenizer, data_collator = train_decoder_on_hagging_face_data(get_decoder_model, checkpoint, data, batch_size=128, n_epochs=15)
 
     print('-----------------------------------------------------------------------------')
     print('-----------------------------------------------------------------------------')

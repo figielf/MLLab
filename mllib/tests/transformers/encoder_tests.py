@@ -117,8 +117,8 @@ if __name__ == '__main__':
     print('device:', DEVICE)
     set_seed()
 
-    #model = TextClassificationEncoder(20_000, 1024, 16, 64, 4, 2, 5, 0.1)
-    #dummy_data_test(model.to(DEVICE))
+    model = TextClassificationEncoder(20_000, 1024, 16, 64, 4, 2, 5, 0.1)
+    dummy_data_test(model.to(DEVICE))
 
     # run model training and prediction on real data
     checkpoint = 'distilbert-base-cased'
