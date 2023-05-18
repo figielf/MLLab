@@ -12,7 +12,7 @@ from applications.rl.stock_trader.action_value_model import sgd_with_momentum_li
 from applications.rl.stock_trader.agent import q_learning_agent
 from applications.rl.stock_trader.environment_runner import play_episode, gather_stock_market_random_states_sample
 from applications.rl.stock_trader.environment import stock_market
-from tests.utils.data_utils import get_stock_market_timeseries_data
+from tests.utils.timeseries_data_utils import get_stock_market_timeseries_data
 
 
 def make_dir(directory):
