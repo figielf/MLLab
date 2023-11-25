@@ -16,6 +16,9 @@ def print_history(Xtrain, Ytrain, Xtest, Ytest, _id, plt, pretrain):
         dnn_model.set_session(session)
         history = dnn_model.fit(Xtrain, Ytrain, Xtest, Ytest, pretrain=pretrain, n_epochs=3)
 
+    _id += 1
+
+
     plt.subplot(_n_runs, 2, 2 * _id + 1)
     plt.plot(history[:, 0], label='train cost')
     plt.plot(history[:, 1], label='test cost')
@@ -25,9 +28,6 @@ def print_history(Xtrain, Ytrain, Xtest, Ytest, _id, plt, pretrain):
     plt.plot(history[:, 3], label='test error')
     plt.legend()
     plt.title(f'my dnn with my autoencoder - DNN training with pretrain={pretrain}')
-    _id += 1
-
-
 if __name__ == '__main__':
     K = 10
     test_size = 1000
